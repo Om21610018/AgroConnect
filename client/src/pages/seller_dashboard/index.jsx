@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import NavItem from "../../components/seller_dashboard/NavItem";
+import { TbMessageChatbotFilled } from "react-icons/tb";
+
 import { FaProductHunt } from "react-icons/fa6";
 import { PiShoppingBagOpenFill } from "react-icons/pi";
 import { FaQq } from "react-icons/fa";
@@ -13,7 +15,8 @@ import { notify } from "../../utils/helper/notification";
 import SellerOverview from "./SellerOverview";
 import { RiBardFill } from "react-icons/ri";
 import CropSenseAI from "./CropSenseAI";
-import {useCookies} from "react-cookie";
+import { useCookies } from "react-cookie";
+import SellerChatBot from "./SellerChatBot";
 
 
 const links = [
@@ -39,9 +42,14 @@ const links = [
   },
   {
     text: "CropSense AI",
-    icon: <RiBardFill />, 
+    icon: <RiBardFill />,
     renderComponent: <CropSenseAI />,
-  }
+  },
+  {
+    text: "ChatBot AI",
+    icon: <TbMessageChatbotFilled />,
+    renderComponent: <SellerChatBot/>,
+  },
 ];
 
 const NewSellerDashboard = () => {
@@ -49,7 +57,6 @@ const NewSellerDashboard = () => {
   const [cookies, setCookie] = useCookies(["seller_access_token", "brandName"]);
 
   const [selected, setSelected] = useState(0);
-  
 
   return (
     <div className="w-full flex flex-row h-[calc(100vh-50px)]">
@@ -57,7 +64,7 @@ const NewSellerDashboard = () => {
         <div className="flex flex-col gap-2">
           {links.map((link, index) => (
             <NavItem
-            key={index}
+              key={index}
               text={link.text}
               icon={link.icon}
               isSelected={selected === index}
@@ -71,8 +78,8 @@ const NewSellerDashboard = () => {
             icon={<TbLogout2 />}
             onClick={() => {
               console.log("Seller log out clicked");
-              setCookie("seller_access_token", "", {expires: new Date(0) });
-              setCookie("brandName", "", {expires: new Date(0) });
+              setCookie("seller_access_token", "", { expires: new Date(0) });
+              setCookie("brandName", "", { expires: new Date(0) });
 
               navigate("/");
               notify("Seller Logged Out", "info");

@@ -2,46 +2,49 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const Commodities = () => {
-  // State to store the fetched commodities data
   const [commodities, setCommodities] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [sortField, setSortField] = useState('');
+  const [sortOrder, setSortOrder] = useState('asc');
 
-  // State to store the input fields (search form)
   const [filters, setFilters] = useState({
-    state: 'Maharashtra', // Default value
-    district: 'Sangli',   // Default value
+    state: 'Maharashtra',
+    district: 'Sangli',
     market: '',
     commodity: '',
     variety: '',
     grade: '',
   });
 
-  // Handle search button click and API request
-  const fetchData = async (searchFilters) => {
+  const fetchData = async (searchFilters, currentPage, currentSortField, currentSortOrder) => {
     try {
       setLoading(true);
       setError('');
-      console.log('Filters applied:', searchFilters);  // Log applied filters for debugging
-  
-      const response = await axios.get('https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070', {
-        params: {
-          'api-key': '579b464db66ec23bdd000001cdd3946e44ce4aad7209ff7b23ac571b',
-          format: 'json',
-          offset: 0,
-          limit: 10,
-          filters: {
-            'state.keyword': searchFilters.state || 'Maharashtra',  // Default to Maharashtra
-            district: searchFilters.district || 'Sangli',           // Default to Sangli
-            market: searchFilters.market || '',                     // Market filter
-            commodity: searchFilters.commodity || '',               // Commodity filter
-            variety: searchFilters.variety || '',                   // Variety filter
-            grade: searchFilters.grade || ''                        // Grade filter
-          },
-        },
+
+      let apiUrl = 'https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key=579b464db66ec23bdd0000018c49ecceac074eb46a9a0da1955654db&format=json';
+
+      // Add pagination
+      apiUrl += `&offset=${(currentPage - 1) * 10}&limit=10`;
+
+      // Add filters
+      Object.entries(searchFilters).forEach(([key, value]) => {
+        if (key === 'state') {
+          apiUrl += `&filters%5Bstate.keyword%5D=${encodeURIComponent(value)}`;
+        }else if(key === 'district'){
+          apiUrl += `&filters%5Bdistrict%5D=${encodeURIComponent(value)}`;
+        }
       });
-  
-      console.log('API Response:', response.data);  // Log API response to check the data received
+
+      // Add sorting
+      if (currentSortField) {
+        apiUrl += `&sort%5B${currentSortField}%5D=${currentSortOrder}`;
+      }
+      console.log("This is api",apiUrl)
+      const response = await axios.get(apiUrl);
+
+      console.log('API Response:', response.data);
       setCommodities(response.data.records);
     } catch (error) {
       setError('Error fetching data');
@@ -50,12 +53,11 @@ const Commodities = () => {
       setLoading(false);
     }
   };
-  
 
-  // Fetch data on component mount with default filters
+  // Fetch data on component mount and when page, sortField, or sortOrder changes
   useEffect(() => {
-    fetchData(filters);
-  }, []);
+    fetchData(filters, page, sortField, sortOrder);
+  }, [page, sortField, sortOrder]);
 
   // Handle input changes in the search form
   const handleInputChange = (e) => {
@@ -69,7 +71,23 @@ const Commodities = () => {
   // Handle form submission
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchData(filters); // Trigger the API call with updated filters
+    setPage(1); // Reset to first page on new search
+    fetchData(filters, 1, sortField, sortOrder);
+  };
+
+  // Handle pagination
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+  };
+
+  // Handle sorting
+  const handleSort = (field) => {
+    if (field === sortField) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
   };
 
   return (
@@ -181,38 +199,58 @@ const Commodities = () => {
       ) : error ? (
         <p className="text-center text-red-500">{error}</p>
       ) : (
-        <table className="min-w-full bg-white shadow-md rounded overflow-hidden mt-6">
-          <thead>
-            <tr>
-              <th className="py-2 px-4 bg-gray-200 text-left">State</th>
-              <th className="py-2 px-4 bg-gray-200 text-left">District</th>
-              <th className="py-2 px-4 bg-gray-200 text-left">Market</th>
-              <th className="py-2 px-4 bg-gray-200 text-left">Commodity</th>
-              <th className="py-2 px-4 bg-gray-200 text-left">Variety</th>
-              <th className="py-2 px-4 bg-gray-200 text-left">Grade</th>
-              <th className="py-2 px-4 bg-gray-200 text-left">Min Price</th>
-              <th className="py-2 px-4 bg-gray-200 text-left">Max Price</th>
-              <th className="py-2 px-4 bg-gray-200 text-left">Modal Price</th>
-              <th className="py-2 px-4 bg-gray-200 text-left">Arrival Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {commodities.map((commodity, index) => (
-              <tr key={index} className="border-t">
-                <td className="py-2 px-4">{commodity.state}</td>
-                <td className="py-2 px-4">{commodity.district}</td>
-                <td className="py-2 px-4">{commodity.market}</td>
-                <td className="py-2 px-4">{commodity.commodity}</td>
-                <td className="py-2 px-4">{commodity.variety}</td>
-                <td className="py-2 px-4">{commodity.grade}</td>
-                <td className="py-2 px-4">{commodity.min_price}</td>
-                <td className="py-2 px-4">{commodity.max_price}</td>
-                <td className="py-2 px-4">{commodity.modal_price}</td>
-                <td className="py-2 px-4">{commodity.arrival_date}</td>
+        <>
+          <table className="min-w-full bg-white shadow-md rounded overflow-hidden mt-6">
+            <thead>
+              <tr>
+                {['state', 'district', 'market', 'commodity', 'variety', 'grade', 'min_price', 'max_price', 'modal_price', 'arrival_date'].map((field) => (
+                  <th 
+                    key={field}
+                    className="py-2 px-4 bg-gray-200 text-left cursor-pointer"
+                    onClick={() => handleSort(field)}
+                  >
+                    {field.charAt(0).toUpperCase() + field.slice(1)}
+                    {sortField === field && (sortOrder === 'asc' ? ' ▲' : ' ▼')}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {commodities.map((commodity, index) => (
+                <tr key={index} className="border-t hover:bg-slate-100 cursor-pointer">
+                  <td className="py-2 px-4">{commodity.state}</td>
+                  <td className="py-2 px-4">{commodity.district}</td>
+                  <td className="py-2 px-4">{commodity.market}</td>
+                  <td className="py-2 px-4">{commodity.commodity}</td>
+                  <td className="py-2 px-4">{commodity.variety}</td>
+                  <td className="py-2 px-4">{commodity.grade}</td>
+                  <td className="py-2 px-4">{commodity.min_price}</td>
+                  <td className="py-2 px-4">{commodity.max_price}</td>
+                  <td className="py-2 px-4">{commodity.modal_price}</td>
+                  <td className="py-2 px-4">{commodity.arrival_date}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Pagination */}
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page === 1}
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2 disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span className="py-2 px-4">Page {page}</span>
+            <button
+              onClick={() => handlePageChange(page + 1)}
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2"
+            >
+              Next
+            </button>
+          </div>
+        </>
       )}
     </div>
   );
