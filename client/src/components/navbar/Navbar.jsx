@@ -12,14 +12,15 @@ function Navbar() {
   const [cookies, setCookie] = useCookies([
     "user_access_token",
     "seller_access_token",
-    "brandName"
+    "userName",
+    "sellerName",
+    "brandName",
   ]);
 
   const userDropdownRef = useRef();
   const sellerDropdownRef = useRef();
 
   const [openCart, setOpenCart] = useState(false);
-
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showSellerDropdown, setShowSellerDropdown] = useState(false);
 
@@ -56,6 +57,7 @@ function Navbar() {
           </span>
         </a>
         <div className="flex flex-row gap-4 md:gap-8 text-2xl md:text-3xl">
+          {/* User Section */}
           <div
             ref={userDropdownRef}
             className="relative flex flex-row gap-1 justify-center items-center text-blue-700 cursor-pointer"
@@ -70,18 +72,21 @@ function Navbar() {
             }}
           >
             <FaUserCircle />
-            <span className="text-sm font-medium hidden md:block">User</span>
-            {cookies.user_access_token && (
-              <div
-                className={`absolute ${
-                  showUserDropdown ? "block" : "hidden"
-                } top-8 right-0 z-10 font-medium bg-white rounded-lg shadow-md pl-1 md:pl-4 pr-2 md:pr-8 py-0 md:py-2`}
-              >
+            {cookies.user_access_token ? (
+              <span className="text-sm font-medium hidden md:block">
+                {cookies.userName || "User"}
+              </span>
+            ) : (
+              <span className="text-sm font-medium hidden md:block">User</span>
+            )}
+            {cookies.user_access_token && showUserDropdown && (
+              <div className="absolute top-8 right-0 z-10 font-medium bg-white rounded-lg shadow-md pl-1 md:pl-4 pr-2 md:pr-8 py-0 md:py-2">
                 <ul className="py-1 md:py-2 flex flex-col text-sm gap-2 text-gray-700 ">
                   <li
                     onClick={() => {
                       console.log("User log out clicked");
-                      setCookie("user_access_token", "", {expires: new Date(0) });
+                      setCookie("user_access_token", "", { expires: new Date(0) });
+                      setCookie("userName", "", { expires: new Date(0) });
                       notify("User Logged Out", "info");
                       navigate("/");
                     }}
@@ -94,6 +99,8 @@ function Navbar() {
               </div>
             )}
           </div>
+
+          {/* Seller Section */}
           <div
             ref={sellerDropdownRef}
             className="relative flex flex-row gap-1 justify-center items-center text-green-700 cursor-pointer"
@@ -108,13 +115,15 @@ function Navbar() {
             }}
           >
             <SiSellfy />
-            <span className="text-sm font-medium hidden md:block">Seller</span>
-            {cookies.seller_access_token && (
-              <div
-                className={`absolute ${
-                  showSellerDropdown ? "block" : "hidden"
-                } top-8 right-0 z-10 font-medium bg-white rounded-lg shadow-md pl-1 md:pl-4 pr-2 md:pr-8 py-0 md:py-2`}
-              >
+            {cookies.seller_access_token ? (
+              <span className="text-sm font-medium hidden md:block">
+                {cookies.sellerName || "Seller"}
+              </span>
+            ) : (
+              <span className="text-sm font-medium hidden md:block">Seller</span>
+            )}
+            {cookies.seller_access_token && showSellerDropdown && (
+              <div className="absolute top-8 right-0 z-10 font-medium bg-white rounded-lg shadow-md pl-1 md:pl-4 pr-2 md:pr-8 py-0 md:py-2">
                 <ul className="py-2 flex flex-col text-sm gap-2 text-gray-700 ">
                   <li
                     onClick={() => {
@@ -128,9 +137,9 @@ function Navbar() {
                   <li
                     onClick={() => {
                       console.log("Seller log out clicked");
-                      setCookie("seller_access_token", "", {expires: new Date(0) });
-                      setCookie("brandName", "", {expires: new Date(0) });
-
+                      setCookie("seller_access_token", "", { expires: new Date(0) });
+                      setCookie("sellerName", "", { expires: new Date(0) });
+                      setCookie("brandName", "", { expires: new Date(0) });
                       navigate("/");
                       notify("Seller Logged Out", "info");
                     }}
@@ -143,6 +152,8 @@ function Navbar() {
               </div>
             )}
           </div>
+
+          {/* Cart Section */}
           <div
             className="flex flex-row gap-1 justify-center items-center text-red-700 cursor-pointer"
             onClick={() => {

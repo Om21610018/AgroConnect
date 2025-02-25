@@ -88,52 +88,66 @@ function SellerOrderRequests() {
                 </tr>
               </thead>
               <tbody>
-                {data.map((item, index) => (
-                  <tr
-                    className="border-b transition duration-300 ease-in-out hover:bg-neutral-100 text-center"
-                    key={index}
-                  >
-                    <td className="px-6 py-4 font-medium">{index + 1}</td>
-                    <td className="px-6 py-2">
-                      <img src={item.productId.image} alt="Image" loading="lazy"/>
-                    </td>
-                    <td className="px-6 py-4">{item.productId.category}</td>
-                    <td className="px-6 py-4">{item.productId.name}</td>
-                    <td className="px-6 py-4">{item.date}</td>
-                    <td className=" px-6 py-4 max-w-sm truncate hover:whitespace-normal">
-                      {item.userId.name}
-                    </td>
-                    <td className=" px-6 py-4 max-w-sm truncate hover:whitespace-normal">
-                      {item.userId.contact}
-                    </td>
-                    <td className=" px-6 py-4 max-w-sm truncate hover:whitespace-normal">
-                      {item.userId.email}
-                    </td>
-                    <td className=" px-6 py-4 max-w-sm truncate hover:whitespace-normal">
-                      {item.orderQty} {item.productId.measuringUnit}
-                    </td>
-                    <td
-                      className=" px-6 py-4 max-w-sm cursor-pointer font-medium text-sky-700 hover:underline whitespace-nowrap"
-                      onClick={() => {
-                        navigate(
-                          `/map/${item.orderLocation.latitude}/${item.orderLocation.longitude}`
-                        );
-                      }}
+                {[...data]
+                  .sort((a, b) => new Date(b.date) - new Date(a.date)) // Sorting in descending order
+                  .map((item, index) => (
+                    <tr
+                      className="border-b transition duration-300 ease-in-out hover:bg-neutral-100 text-center"
+                      key={index}
                     >
-                      {item.orderLocation.latitude.toFixed(4)},{" "}
-                      {item.orderLocation.longitude.toFixed(4)}
-                    </td>
-                    <td className=" px-6 py-4 max-w-sm truncate hover:whitespace-normal">
-                      Rs.{item.totalAmount}
-                    </td>
-                    <td className=" px-6 py-4 max-w-sm truncate hover:whitespace-normal text-yellow-500 font-medium">
-                      <span className="flex justify-center items-center">
-                        <GoDotFill className="mr-1" />
-                        Pending
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                      <td className="px-6 py-4 font-medium">{index + 1}</td>
+                      <td className="px-6 py-2">
+                        <img src={item.productId.image} alt="Image" loading="lazy" />
+                      </td>
+                      <td className="px-6 py-4">{item.productId.category}</td>
+                      <td className="px-6 py-4">{item.productId.name}</td>
+                      {/* <td className="px-6 py-4">{item.date}</td> */}
+                      <td className="px-6 py-4">
+                        {new Date(item.date).toLocaleString("en-GB", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                          hour12: false, // Ensures 24-hour format
+                        })}
+                      </td>
+
+                      <td className="px-6 py-4 max-w-sm truncate hover:whitespace-normal">
+                        {item.userId.name}
+                      </td>
+                      <td className="px-6 py-4 max-w-sm truncate hover:whitespace-normal">
+                        {item.userId.contact}
+                      </td>
+                      <td className="px-6 py-4 max-w-sm truncate hover:whitespace-normal">
+                        {item.userId.email}
+                      </td>
+                      <td className="px-6 py-4 max-w-sm truncate hover:whitespace-normal">
+                        {item.orderQty} {item.productId.measuringUnit}
+                      </td>
+                      <td
+                        className="px-6 py-4 max-w-sm cursor-pointer font-medium text-sky-700 hover:underline whitespace-nowrap"
+                        onClick={() => {
+                          navigate(
+                            `/map/${item.orderLocation.latitude}/${item.orderLocation.longitude}`
+                          );
+                        }}
+                      >
+                        {item.orderLocation.latitude.toFixed(4)},{" "}
+                        {item.orderLocation.longitude.toFixed(4)}
+                      </td>
+                      <td className="px-6 py-4 max-w-sm truncate hover:whitespace-normal">
+                        Rs.{item.totalAmount}
+                      </td>
+                      <td className="px-6 py-4 max-w-sm truncate hover:whitespace-normal text-yellow-500 font-medium">
+                        <span className="flex justify-center items-center">
+                          <GoDotFill className="mr-1" />
+                          Pending
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           )}

@@ -1,0 +1,11 @@
+# MONGO_DB_URL = mongodb://localhost:27017/agroconnect
+MONGO_DB_URL =mongodb+srv://omkarpenshanwar346:DUZr5sys18qx1SBh@cluster0.79zdv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+
+GEMINI_API_KEY = AIzaSyA3yF70wLLSu6EF6NODnd4HvcIVklDcILo
+GMAIL_ID = omkarpenshanwar346@gmail.com
+APP_PASSWORD = ouucgvdvpikppnja
+JWT_SECRET = secret123
+CLOUDINARY_CLOUD_NAME = dnejkokrd
+CLOUDINARY_API_KEY = 675552245859433
+CLOUDINARY_API_SECRET = 67WaTaeJLm5Oj74hqTxhYVZOMYI
+EMAIL=omkarpenshanwar346@gmail.com
