@@ -7,6 +7,7 @@ import TableSkeleton from "../../components/skeleton/TableSkeleton";
 import EmptyStateText from "../../components/empty_state/EmptyStateText";
 import Heading from "../../components/heading/Heading";
 import useOrder from "../../hooks/orders/useOrder";
+import useOrderSearch from "../../hooks/search/useOrderSearch";
 
 function SellerOrderRequests() {
   const [data, setData] = useState([]);
@@ -24,6 +25,9 @@ function SellerOrderRequests() {
     getOrders();
   }, []);
 
+  const { searchQuery, setSearchQuery, filteredOrders } = useOrderSearch(data);
+
+  console.log(data);
   return (
     <>
       {/* Table Header */}
@@ -34,6 +38,8 @@ function SellerOrderRequests() {
             type="text"
             className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-cyan-600 focus:border-cyan-600 block w-full p-2.5"
             placeholder="Search for products"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
       </div>
@@ -88,7 +94,7 @@ function SellerOrderRequests() {
                 </tr>
               </thead>
               <tbody>
-                {[...data]
+                {[...filteredOrders]
                   .sort((a, b) => new Date(b.date) - new Date(a.date)) // Sorting in descending order
                   .map((item, index) => (
                     <tr
