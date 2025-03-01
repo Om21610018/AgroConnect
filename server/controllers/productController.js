@@ -80,6 +80,7 @@ const getProductDataById = async (req, res) => {
     if (!product) {
       return res.status(404).send({ message: "Product not found" });
     }
+    // console.log(product);
     res.status(200).send(product);
   } catch (error) {
     console.log(error);
@@ -87,7 +88,6 @@ const getProductDataById = async (req, res) => {
   }
 };
 
-// Get Product Data By Category
 const getProductDataByCategory = async (req, res) => {
   try {
     let { page = 1, products_per_page = 10 } = req.query;
@@ -100,15 +100,16 @@ const getProductDataByCategory = async (req, res) => {
       .sort({ date: -1 })
       .skip(skip)
       .limit(Number(products_per_page))
-      .select("name media brand measuringUnit pricePerUnit minimumOrderQuantity location sellerId")
+      .select("name image media brand measuringUnit pricePerUnit minimumOrderQuantity location sellerId")
       .lean();
 
     res.status(200).send({ products: data, hasMore });
   } catch (error) {
-    console.log(error);
+    console.error("Error fetching products:", error);
     res.status(500).send({ message: "Something went wrong!" });
   }
 };
+
 
 // Delete Product
 const deleteProduct = async (req, res) => {
@@ -185,8 +186,8 @@ const getMainProductDataById = async (req, res) => {
       return res.status(404).send({ message: "Product not found" });
     }
 
-    res.status(200).send(product);
     // console.log(data);
+    res.status(200).send(product);
   } catch (error) {
     res.status(500).send("Something went wrong!");
     console.log(error);

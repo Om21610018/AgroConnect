@@ -1,13 +1,15 @@
+// Connect to MongoDB
 const mongoose = require("mongoose");
 
 const mediaSchema = new mongoose.Schema({
-  fileName: { type: String, required: true }, // Name of file
-  fileType: { type: String, enum: ["image", "video"], required: true }, // "image" or "video"
-  filePath: { type: String, required: true }, // Local storage path or Cloud URL
+  fileName: { type: String, required: true },
+  fileType: { type: String, enum: ["image", "video"], required: true },
+  filePath: { type: String, required: true },
 });
 
 const productSchema = new mongoose.Schema({
-  media: [mediaSchema], // Array of images/videos
+  image: { type: String, required: true },
+  media: [mediaSchema], // New field added
   brand: { type: String, required: true },
   name: { type: String, required: true },
   category: { type: String, required: true },
@@ -28,6 +30,5 @@ const productSchema = new mongoose.Schema({
 // Add index for efficient search
 productSchema.index({ category: 1, sellerId: 1 });
 
-module.exports = mongoose.model("products", productSchema);
-
-
+module.exports =
+  mongoose.models.products || mongoose.model("products", productSchema);

@@ -37,11 +37,11 @@ const useHttpClient = () => {
         });
       }
 
-      console.log("URL RESPONSE", url, " ", response);
+      // console.log("URL RESPONSE", url, " ", response);
       if (showToast) notify(response.data.message, "success");
       return response;
     } catch (error) {
-      console.log(error);
+      // console.log(error);
 
       if (error.response.status === 504) {
         notify(
@@ -82,11 +82,10 @@ const useHttpClient = () => {
       method,
       body,
       {
-        authorization: `Bearer ${
-          requestType === "user"
+        authorization: `Bearer ${requestType === "user"
             ? cookies.user_access_token
             : cookies.seller_access_token
-        }`,
+          }`,
         ...headers,
       },
       showToast,

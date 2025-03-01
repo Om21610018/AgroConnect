@@ -17,12 +17,21 @@ function Navbar() {
     "brandName",
   ]);
 
+  // console.log("cookies :", cookies);
+  // console.log("brandName :", brandName);
+
   const userDropdownRef = useRef();
   const sellerDropdownRef = useRef();
 
   const [openCart, setOpenCart] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showSellerDropdown, setShowSellerDropdown] = useState(false);
+
+  const isUserLoggedIn = !!cookies.user_access_token;
+  const isSellerLoggedIn = !!cookies.seller_access_token;
+
+  const userName = cookies.userName || "User";
+  const sellerName = cookies.sellerName || "Seller";
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -57,101 +66,91 @@ function Navbar() {
           </span>
         </a>
         <div className="flex flex-row gap-4 md:gap-8 text-2xl md:text-3xl">
-          {/* User Section */}
-          <div
-            ref={userDropdownRef}
-            className="relative flex flex-row gap-1 justify-center items-center text-blue-700 cursor-pointer"
-            onMouseEnter={() => {
-              setShowUserDropdown(true);
-              setShowSellerDropdown(false);
-            }}
-            onClick={() => {
-              if (!cookies.user_access_token) {
-                navigate("/account/user");
-              }
-            }}
-          >
-            <FaUserCircle />
-            {cookies.user_access_token ? (
+          {/* Show User Section only if Seller is NOT logged in */}
+          {!isSellerLoggedIn && (
+            <div
+              ref={userDropdownRef}
+              className="relative flex flex-row gap-1 justify-center items-center text-blue-700 cursor-pointer"
+              onMouseEnter={() => {
+                setShowUserDropdown(true);
+                setShowSellerDropdown(false);
+              }}
+              onClick={() => {
+                if (!isUserLoggedIn) {
+                  navigate("/account/user");
+                }
+              }}
+            >
+              <FaUserCircle />
               <span className="text-sm font-medium hidden md:block">
-                {cookies.userName || "User"}
+                {userName}
               </span>
-            ) : (
-              <span className="text-sm font-medium hidden md:block">User</span>
-            )}
-            {cookies.user_access_token && showUserDropdown && (
-              <div className="absolute top-8 right-0 z-10 font-medium bg-white rounded-lg shadow-md pl-1 md:pl-4 pr-2 md:pr-8 py-0 md:py-2">
-                <ul className="py-1 md:py-2 flex flex-col text-sm gap-2 text-gray-700 ">
-                  <li
-                    onClick={() => {
-                      console.log("User log out clicked");
-                      setCookie("user_access_token", "", { expires: new Date(0) });
-                      setCookie("userName", "", { expires: new Date(0) });
-                      notify("User Logged Out", "info");
-                      navigate("/");
-                    }}
-                  >
-                    <a className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0  whitespace-nowrap">
-                      User Logout
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            )}
-          </div>
+              {isUserLoggedIn && showUserDropdown && (
+                <div className="absolute top-8 right-0 z-10 font-medium bg-white rounded-lg shadow-md pl-1 md:pl-4 pr-2 md:pr-8 py-0 md:py-2">
+                  <ul className="py-1 md:py-2 flex flex-col text-sm gap-2 text-gray-700">
+                    <li
+                      onClick={() => {
+                        setCookie("user_access_token", "", { expires: new Date(0) });
+                        setCookie("userName", "", { expires: new Date(0) });
+                        notify("User Logged Out", "info");
+                        navigate("/");
+                      }}
+                    >
+                      <a className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 whitespace-nowrap">
+                        Logout
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
 
-          {/* Seller Section */}
-          <div
-            ref={sellerDropdownRef}
-            className="relative flex flex-row gap-1 justify-center items-center text-green-700 cursor-pointer"
-            onMouseEnter={() => {
-              setShowSellerDropdown(true);
-              setShowUserDropdown(false);
-            }}
-            onClick={() => {
-              if (!cookies.seller_access_token) {
-                navigate("/account/seller");
-              }
-            }}
-          >
-            <SiSellfy />
-            {cookies.seller_access_token ? (
+          {/* Show Seller Section only if User is NOT logged in */}
+          {!isUserLoggedIn && (
+            <div
+              ref={sellerDropdownRef}
+              className="relative flex flex-row gap-1 justify-center items-center text-green-700 cursor-pointer"
+              onMouseEnter={() => {
+                setShowSellerDropdown(true);
+                setShowUserDropdown(false);
+              }}
+              onClick={() => {
+                if (!isSellerLoggedIn) {
+                  navigate("/account/seller");
+                }
+              }}
+            >
+              <SiSellfy />
               <span className="text-sm font-medium hidden md:block">
-                {cookies.sellerName || "Seller"}
+                {sellerName}
               </span>
-            ) : (
-              <span className="text-sm font-medium hidden md:block">Seller</span>
-            )}
-            {cookies.seller_access_token && showSellerDropdown && (
-              <div className="absolute top-8 right-0 z-10 font-medium bg-white rounded-lg shadow-md pl-1 md:pl-4 pr-2 md:pr-8 py-0 md:py-2">
-                <ul className="py-2 flex flex-col text-sm gap-2 text-gray-700 ">
-                  <li
-                    onClick={() => {
-                      navigate("/sellerdashboard");
-                    }}
-                  >
-                    <a className="block px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-green-700 md:p-0  whitespace-nowrap">
-                      Seller Dashboard
-                    </a>
-                  </li>
-                  <li
-                    onClick={() => {
-                      console.log("Seller log out clicked");
-                      setCookie("seller_access_token", "", { expires: new Date(0) });
-                      setCookie("sellerName", "", { expires: new Date(0) });
-                      setCookie("brandName", "", { expires: new Date(0) });
-                      navigate("/");
-                      notify("Seller Logged Out", "info");
-                    }}
-                  >
-                    <a className="block px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-green-700 md:p-0  whitespace-nowrap">
-                      Seller Logout
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            )}
-          </div>
+              {isSellerLoggedIn && showSellerDropdown && (
+                <div className="absolute top-8 right-0 z-10 font-medium bg-white rounded-lg shadow-md pl-1 md:pl-4 pr-2 md:pr-8 py-0 md:py-2">
+                  <ul className="py-2 flex flex-col text-sm gap-2 text-gray-700">
+                    <li onClick={() => navigate("/sellerdashboard")}>
+                      <a className="block px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-green-700 md:p-0 whitespace-nowrap">
+                        Dashboard
+                      </a>
+                    </li>
+                    <li
+                      onClick={() => {
+                        setCookie("seller_access_token", "", { expires: new Date(0) });
+                        setCookie("sellerName", "", { expires: new Date(0) });
+                        setCookie("brandName", "", { expires: new Date(0) });
+                        navigate("/");
+                        notify("Seller Logged Out", "info");
+                      }}
+                    >
+                      <a className="block px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-green-700 md:p-0 whitespace-nowrap">
+                        Logout
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Cart Section */}
           <div

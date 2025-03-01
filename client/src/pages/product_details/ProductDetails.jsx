@@ -89,23 +89,30 @@ function ProductDetails() {
     dispatch(removeFromCart(productDashboardData?._id));
   };
 
-  const mediaItems = productDashboardData?.media || [
-    { type: "image", url: "https://plus.unsplash.com/premium_photo-1667030474693-6d0632f97029?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" },
-    { type: "image", url: "https://images.unsplash.com/photo-1573865526739-10659fec78a5?q=80&w=1430&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" },
-    { type: "video", url: "https://www.youtube.com/watch?v=Pj0HbO0LI7E" }, // Sample video
-  ];
+  // const mediaItems = productDashboardData?.media || [
+  //   { type: "image", url: "https://plus.unsplash.com/premium_photo-1667030474693-6d0632f97029?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" },
+  //   { type: "image", url: "https://images.unsplash.com/photo-1573865526739-10659fec78a5?q=80&w=1430&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" },
+  //   { type: "video", url: "https://www.youtube.com/watch?v=Pj0HbO0LI7E" }, // Sample video
+  // ];
+
+  const mediaItems = productDashboardData.media.map(item => ({
+    type: item.fileType,  // "image" or "video"
+    url: item.filePath,   // Cloudinary URL or any other source
+  }));
+  console.log(productDashboardData.media);
 
   const sliderSettings = {
     dots: true,
-    infinite: true,
+    infinite: mediaItems.length > 1, // Disable infinite loop if only 1 image
     speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
-    autoplay: true,
+    autoplay: mediaItems.length > 1, // Disable autoplay if only 1 image
     autoplaySpeed: 3000,
     arrows: true,
-    adaptiveHeight: false, // Keeps a fixed height
+    adaptiveHeight: false,
   };
+
 
   return (
     <>

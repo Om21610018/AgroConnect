@@ -21,7 +21,7 @@ function Product() {
       let data = await getProductsByCategory(type, page, products_per_page);
       let productDetails = data.products;
       console.log(productDetails);
-      console.log(data.hasMore);
+      // console.log(data.hasMore);
       setIsReachingEnd(!data.hasMore);
 
       setPage(page + 1);
