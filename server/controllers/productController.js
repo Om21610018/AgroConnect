@@ -7,8 +7,10 @@ const addProduct = async (req, res) => {
   try {
     req.body.sellerId = req.sellerId;
 
-    const uploadedFiles = req.files; // Expecting multiple files
-    if (!uploadedFiles || uploadedFiles.length === 0) {
+    // ✅ Fix: Flatten `req.files` into a single array
+    const uploadedFiles = Object.values(req.files || {}).flat();
+
+    if (!uploadedFiles.length) {
       return res.status(400).json({ message: "No media uploaded" });
     }
 
@@ -16,23 +18,30 @@ const addProduct = async (req, res) => {
     for (let file of uploadedFiles) {
       try {
         let cloudRes = await uploadImageToCloudinary(file.buffer);
-        mediaArray.push({ url: cloudRes.secure_url, type: file.mimetype.startsWith("image") ? "image" : "video" });
+        mediaArray.push({
+          fileName: file.originalname,
+          fileType: file.mimetype.startsWith("image") ? "image" : "video",
+          filePath: cloudRes.secure_url,
+        });
       } catch (error) {
-        console.log(error);
+        console.error("Cloudinary Upload Error:", error);
         return res.status(500).send({ message: "Error uploading media to Cloudinary" });
       }
     }
 
     req.body.media = mediaArray;
+    req.body.image = mediaArray.length > 0 ? mediaArray[0].filePath : "";
+
     let product = new Product(req.body);
     await product.save();
 
     res.status(200).send({ message: "Product Added Successfully" });
   } catch (error) {
-    console.log(error);
+    console.error("Add Product Error:", error);
     res.status(500).send({ message: "Something went wrong!" });
   }
 };
+
 
 // Update Product
 const updateProduct = async (req, res) => {
@@ -56,19 +65,24 @@ const updateProduct = async (req, res) => {
       for (let file of uploadedFiles) {
         try {
           let cloudRes = await uploadImageToCloudinary(file.buffer);
-          mediaArray.push({ url: cloudRes.secure_url, type: file.mimetype.startsWith("image") ? "image" : "video" });
+          mediaArray.push({
+            fileName: file.originalname,
+            fileType: file.mimetype.startsWith("image") ? "image" : "video",
+            filePath: cloudRes.secure_url,
+          });
         } catch (error) {
-          console.log(error);
+          console.error(error);
           return res.status(500).send({ message: "Error uploading media to Cloudinary" });
         }
       }
       updatedFields.media = mediaArray;
+      updatedFields.image = mediaArray.length > 0 ? mediaArray[0].filePath : product.image;
     }
 
     await Product.findByIdAndUpdate(req.params.productId, updatedFields);
     res.status(200).send({ message: "Product Updated Successfully" });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).send({ message: "Something went wrong!" });
   }
 };

@@ -9,3 +9,6 @@ server/node_modules/
 # Ignore package-lock.json
 client/package-lock.json
 server/package-lock.json
+
+# Ignor user Credentials
+helper.txt

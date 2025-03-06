@@ -81,7 +81,7 @@ const useProducts = () => {
         "Content-Type": "multipart/form-data",
       });
     } catch (error) {
-      console.log(error);
+      console.log("Error adding product:", error);
     }
   };
 
