@@ -17,6 +17,7 @@
     "axios": "^1.7.7",
     "leaflet": "^1.9.4",
     "leaflet-geosearch": "^3.11.0",
+    "razorpay": "^2.9.6",
     "react": "^18.2.0",
     "react-cookie": "^7.1.4",
     "react-dom": "^18.2.0",
