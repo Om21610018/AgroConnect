@@ -1,236 +1,257 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import axios from "axios";
-import {
-  MicrophoneIcon,
-  StopIcon,
-  SpeakerWaveIcon,
-  PauseIcon,
-  PlayIcon,
-  ArrowPathIcon,
-} from "@heroicons/react/24/solid";
+import { AudioRecorder } from "react-audio-voice-recorder";
+import { FaPlay, FaPause, FaRedo } from "react-icons/fa";
 
-export default function SellerChatBot() {
-  const [geminiResponse, setGeminiResponse] = useState("");
-  const [recording, setRecording] = useState(false);
-  const [hindiText, setHindiText] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [speaking, setSpeaking] = useState(false);
-  const [paused, setPaused] = useState(false);
-  const [error, setError] = useState(null);
+const SellerChatBot = () => {
+  const [responseText, setResponseText] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [recordedAudio, setRecordedAudio] = useState(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [hasSpoken, setHasSpoken] = useState(false);
+  const synthRef = useRef(window.speechSynthesis);
   const utteranceRef = useRef(null);
-  const synth = window.speechSynthesis;
+  const audioElementRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isSpeechPaused, setIsSpeechPaused] = useState(false);
 
-  useEffect(() => {
-    return () => {
-      synth.cancel();
-    };
-  }, []);
-
-  const startRecording = async () => {
-    setRecording(true);
-    setLoading(true);
-    setGeminiResponse("");
-    setHindiText("");
-    setError(null);
-
+  const handleRecordingComplete = async (blob) => {
     try {
-      const response = await axios.post("http://localhost:8000/chatbot/ask");
+      const wavBlob = await convertToWav(blob);
+      const audioFile = new File([wavBlob], "recording.wav", { type: "audio/wav" });
 
-      const processedResponse = response.data.result
-        .replace(/\*/g, "")
-        .replace(/\s+/g, " ")
-        .trim();
+      setRecordedAudio({
+        file: audioFile,
+        blob: wavBlob,
+        url: URL.createObjectURL(wavBlob),
+      });
 
-      setGeminiResponse(processedResponse);
-      setHindiText(response.data.hindiText);
-    //   speakText(processedResponse);
+      if (audioElementRef.current) {
+        document.body.removeChild(audioElementRef.current);
+      }
+
+      const audio = document.createElement("audio");
+      audio.src = URL.createObjectURL(wavBlob);
+      audio.controls = true;
+      audio.className = "mt-4 w-full";
+      document.body.appendChild(audio);
+      audioElementRef.current = audio;
+
+      audio.addEventListener("play", () => setIsPlaying(true));
+      audio.addEventListener("pause", () => setIsPlaying(false));
+      audio.addEventListener("ended", () => setIsPlaying(false));
+
+      setError("");
     } catch (error) {
-      console.error("Error:", error);
-      setGeminiResponse("An error occurred while processing your request.");
-      setError("Failed to get response from server.");
-    } finally {
-      setRecording(false);
-      setLoading(false);
+      console.error("Error processing recording:", error);
+      setError("Failed to process recording. Please try again.");
     }
   };
 
-  const speakText = (text) => {
-    if ('speechSynthesis' in window) {
-      synth.cancel();
-      setSpeaking(true);
-      setPaused(false);
-      setError(null);
+  const handleSubmit = async () => {
+    if (!recordedAudio) {
+      setError("Please record audio before submitting.");
+      return;
+    }
 
-      if (!text) {
-        setError("No text available to speak.");
-        return;
-      }
+    try {
+      setIsLoading(true);
+      setError("");
 
-      utteranceRef.current = new SpeechSynthesisUtterance(text);
-      utteranceRef.current.lang = 'hi-IN';
-      utteranceRef.current.rate = 0.9;
-      utteranceRef.current.pitch = 1;
+      const formData = new FormData();
+      formData.append("file", recordedAudio.file);
 
-      utteranceRef.current.onend = () => {
-        setSpeaking(false);
-        setPaused(false);
-      };
+      const response = await axios.post("http://localhost:8000/chatbot/ask", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
-      utteranceRef.current.onerror = (event) => {
-        console.error("SpeechSynthesis error", event);
-        setSpeaking(false);
-        setPaused(false);
-        if (event.error === "interrupted" || event.error === "canceled") {
-          setError("Speech was interrupted. You can try speaking again.");
-        } else {
-          setError(`Speech synthesis error: ${event.error}`);
+      setResponseText(response.data.translatedText);
+      speakResponse(response.data.translatedText);
+    } catch (error) {
+      console.error("Error sending audio to backend:", error);
+      setError("Failed to process audio. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const convertToWav = async (blob) => {
+    if (blob.type === "audio/wav") return blob;
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        try {
+          const arrayBuffer = reader.result;
+          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+          const wavBuffer = audioBufferToWav(audioBuffer);
+          const wavBlob = new Blob([wavBuffer], { type: "audio/wav" });
+          resolve(wavBlob);
+        } catch (error) {
+          reject(error);
         }
       };
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(blob);
+    });
+  };
 
-      synth.speak(utteranceRef.current);
-    } else {
-      setError('Text-to-speech is not supported in your browser. Please try a different browser.');
+  const audioBufferToWav = (buffer) => {
+    const numChannels = buffer.numberOfChannels;
+    const length = buffer.length * numChannels * 2;
+    const sampleRate = buffer.sampleRate;
+    const view = new DataView(new ArrayBuffer(44 + length));
+
+    writeString(view, 0, "RIFF");
+    view.setUint32(4, 36 + length, true);
+    writeString(view, 8, "WAVE");
+    writeString(view, 12, "fmt ");
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 4, true);
+    view.setUint16(32, numChannels * 2, true);
+    view.setUint16(34, 16, true);
+    writeString(view, 36, "data");
+    view.setUint32(40, length, true);
+
+    const channels = [];
+    for (let i = 0; i < numChannels; i++) {
+      channels.push(buffer.getChannelData(i));
     }
+
+    let offset = 44;
+    for (let i = 0; i < buffer.length; i++) {
+      for (let ch = 0; ch < numChannels; ch++) {
+        const sample = Math.max(-1, Math.min(1, channels[ch][i]));
+        const s = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+        view.setInt16(offset, s, true);
+        offset += 2;
+      }
+    }
+
+    return view.buffer;
+  };
+
+  const writeString = (dataView, offset, string) => {
+    for (let i = 0; i < string.length; i++) {
+      dataView.setUint8(offset + i, string.charCodeAt(i));
+    }
+  };
+
+  const speakResponse = (text) => {
+    if (!text) return;
+
+    if (synthRef.current.speaking) {
+      synthRef.current.cancel();
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "hi-IN";
+    utterance.rate = 0.95;
+    utterance.pitch = 1.1;
+
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+      setIsSpeechPaused(false);
+    };
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      setHasSpoken(true);
+      setIsSpeechPaused(false);
+    };
+
+    utteranceRef.current = utterance;
+    synthRef.current.speak(utterance);
   };
 
   const toggleSpeech = () => {
-    if (speaking && !paused) {
-      synth.pause();
-      setPaused(true);
-    } else if (paused) {
-      synth.resume();
-      setPaused(false);
-    } else {
-      speakText(geminiResponse);
+    if (synthRef.current.speaking && !synthRef.current.paused) {
+      synthRef.current.pause();
+      setIsSpeechPaused(true);
+      setIsSpeaking(false);
+    } else if (synthRef.current.paused) {
+      synthRef.current.resume();
+      setIsSpeechPaused(false);
+      setIsSpeaking(true);
     }
   };
 
-  const stopSpeech = () => {
-    synth.cancel();
-    setSpeaking(false);
-    setPaused(false);
+  const handleRestart = () => {
+    if (responseText) {
+      synthRef.current.cancel();
+      speakResponse(responseText);
+    }
   };
 
-  const retrySpeech = () => {
-    setError(null);
-    speakText(geminiResponse);
+  const playRecordedAudio = () => {
+    if (audioElementRef.current) {
+      if (isPlaying) {
+        audioElementRef.current.pause();
+      } else {
+        audioElementRef.current.play();
+      }
+    }
   };
 
   return (
-    <div className=" bg-gray-100 flex flex-col justify-center items-center p-4">
-      <div className="w-full max-w-4xl mx-auto">
-        <div className="bg-white shadow-lg rounded-3xl overflow-hidden">
-          <div className="p-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-6 text-center">
-              KrushiMitra
-            </h1>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-8">
+      <h1 className="text-3xl font-bold mb-6">Seller ChatBot - Voice Input</h1>
+      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold mb-3">Record your message</h2>
+          <AudioRecorder
+            onRecordingComplete={handleRecordingComplete}
+            audioTrackConstraints={{ noiseSuppression: true, echoCancellation: true }}
+            downloadOnSavePress={false}
+            downloadFileExtension="wav"
+          />
+        </div>
 
-            <div className="space-y-4">
-              <div className="flex justify-center mb-8 space-x-4">
-                <button
-                  onClick={startRecording}
-                  disabled={loading}
-                  className={`flex items-center justify-center px-6 py-3 text-white font-medium rounded-lg transition-colors duration-300 ${
-                    recording
-                      ? "bg-red-600 hover:bg-red-700"
-                      : "bg-cyan-600 hover:bg-cyan-700"
-                  }`}
-                >
-                  {recording ? (
-                    <>
-                      <StopIcon className="h-5 w-5 mr-2" />
-                      Stop Recording
-                    </>
-                  ) : (
-                    <>
-                      <MicrophoneIcon className="h-5 w-5 mr-2" />
-                      Start Recording
-                    </>
-                  )}
-                </button>
-
-                <button
-                  onClick={toggleSpeech}
-                  disabled={!geminiResponse || loading}
-                  className={`flex items-center justify-center px-6 py-3 text-white font-medium rounded-lg transition-colors duration-300 ${
-                    geminiResponse && !loading
-                      ? "bg-green-600 hover:bg-green-700"
-                      : "bg-gray-400 cursor-not-allowed"
-                  }`}
-                >
-                  {speaking && !paused ? (
-                    <>
-                      <PauseIcon className="h-5 w-5 mr-2" />
-                      Pause Speech
-                    </>
-                  ) : paused ? (
-                    <>
-                      <PlayIcon className="h-5 w-5 mr-2" />
-                      Resume Speech
-                    </>
-                  ) : (
-                    <>
-                      <SpeakerWaveIcon className="h-5 w-5 mr-2" />
-                      Speak Response
-                    </>
-                  )}
-                </button>
-
-                {speaking && (
-                  <button
-                    onClick={stopSpeech}
-                    className="flex items-center justify-center px-6 py-3 text-white font-medium rounded-lg transition-colors duration-300 bg-red-600 hover:bg-red-700"
-                  >
-                    <StopIcon className="h-5 w-5 mr-2" />
-                    Stop Speech
-                  </button>
-                )}
-
-                {error && (
-                  <button
-                    onClick={retrySpeech}
-                    className="flex items-center justify-center px-6 py-3 text-white font-medium rounded-lg transition-colors duration-300 bg-yellow-600 hover:bg-yellow-700"
-                  >
-                    <ArrowPathIcon className="h-5 w-5 mr-2" />
-                    Retry Speech
-                  </button>
-                )}
-              </div>
-
-              {loading && (
-                <div className="flex justify-center items-center space-x-2 mb-4">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-cyan-600"></div>
-                  <span className="text-cyan-600 font-semibold">Loading...</span>
-                </div>
-              )}
-
-              {error && (
-                <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
-                  <p>{error}</p>
-                </div>
-              )}
-
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Hindi Text:
-                </h3>
-                <p className="text-gray-700">
-                  {hindiText || "No text available"}
-                </p>
-              </div>
-
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  KrushiMitra Response:
-                </h3>
-                <p className="text-gray-700">
-                  {geminiResponse || "No response available"}
-                </p>
-              </div>
+        {recordedAudio && (
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold mb-3">Preview your recording</h2>
+            <div className="flex gap-4">
+              <button
+                onClick={playRecordedAudio}
+                className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
+              >
+                {isPlaying ? "Pause" : "Play Recording"}
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={isLoading}
+                className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded disabled:bg-gray-400"
+              >
+                {isLoading ? "Processing..." : "Submit Recording"}
+              </button>
             </div>
           </div>
-        </div>
+        )}
+
+        {error && <div className="mt-4 text-red-500">{error}</div>}
+
+        {responseText && !isLoading && (
+          <div className="mt-6 p-4 bg-gray-50 rounded-md">
+            <h2 className="text-lg font-semibold mb-2">Response:</h2>
+            <div className="whitespace-pre-line mb-3">{responseText}</div>
+            <div className="flex gap-4">
+              <button onClick={handleRestart}>
+                <FaRedo size={22} title="Play from start" />
+              </button>
+              <button onClick={toggleSpeech}>
+                {isSpeechPaused ? <FaPlay size={22} title="Resume" /> : <FaPause size={22} title="Pause" />}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
-}
+};
+
+export default SellerChatBot;

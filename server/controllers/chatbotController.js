@@ -1,86 +1,141 @@
-const { spawn } = require("child_process");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-require("dotenv").config();
+const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
+const axios = require("axios");
+const FormData = require("form-data"); // Import the form-data library
+require("dotenv").config(); // Load environment variables from .env file
 
-const genAI = new GoogleGenerativeAI(process.env.CHATBOT_GEMINI_API_KEY);
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, "uploads");
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    cb(null, `recording_${Date.now()}.wav`);
+  },
+});
 
-function runPythonScript() {
-  return new Promise((resolve, reject) => {
-    const pythonProcess = spawn("python", [path.join(__dirname, "voice_to_text.py")]);
-    let transcript = "";
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === "audio/wav" || file.originalname.endsWith(".wav")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only WAV audio files are allowed"), false);
+    }
+  },
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+});
 
-    pythonProcess.stdout.setEncoding("utf8"); // Ensure UTF-8 encoding
-    pythonProcess.stdout.on("data", (data) => {
-      transcript += data.toString();
-    });
-
-    pythonProcess.stderr.on("data", (data) => {
-      console.error(`Error: ${data}`);
-      reject(data.toString());
-    });
-
-    pythonProcess.on("close", (code) => {
-      if (code === 0) {
-        resolve(transcript.trim());
-      } else {
-        reject(`Python process exited with code ${code}`);
+exports.chatbotController = [
+  upload.single("file"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({ error: "No audio file uploaded or invalid format" });
       }
-    });
-  });
-}
 
-function translateText(text, sourceLang, targetLang) {
-  return new Promise((resolve, reject) => {
-    const python = spawn(
-      "python",
-      ["./translate.py", text, sourceLang, targetLang],
-      {
-        env: { ...process.env, PYTHONIOENCODING: "utf-8" },
+      const audioFilePath = req.file.path;
+      console.log(`WAV audio file saved at: ${audioFilePath}`);
+
+      const formData = new FormData();
+      const fileStream = fs.createReadStream(audioFilePath);
+      formData.append("file", fileStream, req.file.filename);
+
+      console.log("Sending WAV file to transcription service:", req.file.filename);
+
+      try {
+        // Send the file to the transcription service
+        const transcriptionResponse = await axios.post(
+          "http://localhost:5000/transcribe",
+          formData,
+          {
+            headers: {
+              ...formData.getHeaders(),
+            },
+            maxContentLength: Infinity,
+            maxBodyLength: Infinity,
+          }
+        );
+
+        console.log(
+          "📝 Transcription:",
+          transcriptionResponse.data.transcription || transcriptionResponse.data.error
+        );
+
+        const inputValue = transcriptionResponse?.data?.transcription;
+
+        if (!inputValue) {
+          throw new Error("No transcription returned from the transcription service.");
+        }
+
+        console.log("Sending transcription to external API:", inputValue);
+
+        // Send the transcription to the external API
+        const apiResponse = await fetch(
+          "http://localhost:7860/api/v1/run/d12b3797-1a66-4681-98fc-d5c0cb1a70c9?stream=false",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": "sk-RWBBBynk62ICCt7iqRwq7tEFJO96wTE7Tfg2m-nrpJU",
+            },
+            body: JSON.stringify({
+              input_value: inputValue,
+              output_type: "chat",
+              input_type: "chat",
+              tweaks: {},
+            }),
+          }
+        );
+
+        const apiResponseData = await apiResponse.json();
+
+        // Debugging: Log the full response from the external API
+        console.log("Full API Response:", JSON.stringify(apiResponseData, null, 2));
+
+        // Extract the text from the response
+        const responseText =
+        apiResponseData?.outputs?.[0]?.outputs?.[0]?.results?.message?.data?.text ||
+        apiResponseData?.outputs?.[0]?.outputs?.message?.text ||
+        apiResponseData?.outputs?.[0]?.outputs?.results?.message?.data?.text ||
+        "No text found in the API response."; 
+
+        console.log("Extracted Text:", responseText);
+
+        if (!responseText) {
+          throw new Error("No valid text found in the API response.");
+        }
+
+        // Respond with the extracted text
+        res.json({
+          filePath: audioFilePath,
+          translatedText: responseText || "No transcription returned",
+          externalApiResponse: responseText,
+        });
+      } catch (transcriptionError) {
+        console.error("Error calling transcription service:", transcriptionError.message);
+        res.status(500).json({
+          error: "Failed to get transcription",
+          details: transcriptionError.message,
+        });
       }
-    );
-    let translatedText = "";
 
-    python.stdout.on("data", (data) => {
-      translatedText += data.toString("utf-8");
-    });
-
-    python.stderr.on("data", (data) => {
-      console.error(`Python Error: ${data}`);
-      reject(data.toString("utf-8"));
-    });
-
-    python.on("close", (code) => {
-      if (code !== 0) {
-        reject(`Python process exited with code ${code}`);
-      } else {
-        resolve(translatedText.trim());
-      }
-    });
-  });
-}
-
-// Function to generate content using Google Gemini
-async function generateGeminiContent(prompt) {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-  const result = await model.generateContent([prompt]);
-  return result.response.text();
-}
-
-exports.chatbotController = async (req, res) => {
-  try {
-    // Run Python script to capture Hindi speech and convert it to text
-    const hindiText = await runPythonScript();
-
-    // Hindi to English translation using Google Gemini
-    const geminiResponse = await generateGeminiContent(hindiText);
-    console.log("Gemini Response:", geminiResponse);
-    // const hindiResponse = await translateText(geminiResponse, 'en', 'hi');
-    res.json({ result: geminiResponse, hindiText });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "An error occurred during processing" });
-  }
-};
-
-
+      // Delete the uploaded file after processing
+      fs.unlink(audioFilePath, (err) => {
+        if (err) console.error("Error deleting file:", err);
+        else console.log(`File ${audioFilePath} deleted successfully`);
+      });
+    } catch (error) {
+      console.error("Error processing audio file:", error);
+      res.status(500).json({ error: error.message || "Failed to process audio file" });
+    }
+  },
+];

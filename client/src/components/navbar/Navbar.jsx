@@ -12,16 +12,23 @@ function Navbar() {
   const [cookies, setCookie] = useCookies([
     "user_access_token",
     "seller_access_token",
-    "brandName"
+    "brandName",
+    "userName"
   ]);
 
   const userDropdownRef = useRef();
   const sellerDropdownRef = useRef();
 
   const [openCart, setOpenCart] = useState(false);
-
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showSellerDropdown, setShowSellerDropdown] = useState(false);
+  const [userName, setUserName] = useState("");
+
+  useEffect(() => {
+    if (cookies.userName) {
+      setUserName(cookies.userName);
+    }
+  }, [cookies.userName]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -70,7 +77,9 @@ function Navbar() {
             }}
           >
             <FaUserCircle />
-            <span className="text-sm font-medium hidden md:block">User</span>
+            <span className="text-sm font-medium hidden md:block">
+              {cookies.user_access_token ? `Welcome, ${userName}` : "User"}
+            </span>
             {cookies.user_access_token && (
               <div
                 className={`absolute ${
@@ -81,7 +90,8 @@ function Navbar() {
                   <li
                     onClick={() => {
                       console.log("User log out clicked");
-                      setCookie("user_access_token", "", {expires: new Date(0) });
+                      setCookie("user_access_token", "", { expires: new Date(0) });
+                      setCookie("userName", "", { expires: new Date(0) });
                       notify("User Logged Out", "info");
                       navigate("/");
                     }}
@@ -128,8 +138,8 @@ function Navbar() {
                   <li
                     onClick={() => {
                       console.log("Seller log out clicked");
-                      setCookie("seller_access_token", "", {expires: new Date(0) });
-                      setCookie("brandName", "", {expires: new Date(0) });
+                      setCookie("seller_access_token", "", { expires: new Date(0) });
+                      setCookie("brandName", "", { expires: new Date(0) });
 
                       navigate("/");
                       notify("Seller Logged Out", "info");

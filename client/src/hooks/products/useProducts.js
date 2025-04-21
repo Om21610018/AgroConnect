@@ -26,6 +26,7 @@ const useProducts = () => {
       console.log(error);
     }
   };
+  
 
   const getProductUserDashboardData = async (productId) => {
     try {
@@ -116,6 +117,16 @@ const useProducts = () => {
     }
   };
 
+  const searchProducts = async (query) => {
+    try {
+      const products = await sendRequest(`/products/search?query=${query}`);
+      return products.data;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  
+
   return {
     getProductsByCategory,
     getProductUserDashboardData,
@@ -126,6 +137,7 @@ const useProducts = () => {
     getMainProductData,
     isLoading,
     setIsLoading,
+    searchProducts
   };
 };
 

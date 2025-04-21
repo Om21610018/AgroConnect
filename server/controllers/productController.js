@@ -138,6 +138,22 @@ const deleteProduct = async (req, res) => {
   }
 };
 
+
+// Search product
+const searchProducts = async (req, res) => {
+  try {
+    const { query } = req.query;
+    const products = await Product.find({
+      $text: { $search: query }
+    }).lean();
+
+    res.status(200).send(products);
+  } catch (error) {
+    res.status(500).send({ message: "Something went wrong!" });
+    console.log(error);
+  }
+};
+
 // Get Seller Dashboard Data
 const getProductDataBySellerId = async (req, res) => {
   try {
@@ -292,4 +308,5 @@ module.exports = {
   getProductStocksById,
   getProductDashboardData,
   getMainProductDataById,
+  searchProducts
 };

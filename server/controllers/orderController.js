@@ -39,12 +39,20 @@ const showOrdersBySeller = async (req, res) => {
       .populate({ path: "userId", select: "name email contact" })
       .lean();
 
-    console.log(data);
+    console.log("Raw Data:", data);
 
-    data = data.map((order) => {
-      const totalPrice = order.orderQty * order.productId.pricePerUnit;
-      return { ...order, totalAmount: totalPrice };
-    });
+    // Ensure orderDate is properly formatted and sort in descending order
+    data = data
+      .map((order) => {
+        return {
+          ...order,
+          orderDate: new Date(order.orderDate), // Convert to Date object
+          totalAmount: order.orderQty * order.productId.pricePerUnit,
+        };
+      })
+      .sort((a, b) => b.orderDate - a.orderDate); // Sort by orderDate (latest first)
+
+    console.log("Sorted Data:", data);
 
     res.status(200).send(data);
   } catch (error) {
@@ -52,6 +60,8 @@ const showOrdersBySeller = async (req, res) => {
     console.log(error);
   }
 };
+
+
 
 module.exports = {
   addOrder,

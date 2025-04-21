@@ -13,6 +13,9 @@ router.post(
   productController.addProduct
 );
 
+// Search Products
+router.get("/search", productController.searchProducts);
+
 // Get Product Data By Category
 router.get("/category/:category", productController.getProductDataByCategory);
 
