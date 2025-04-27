@@ -30,6 +30,7 @@ export const VERIFY = (type, token) => `/auth/${type}/verify/${token}`;
 
 // Orders
 export const ORDER_PRODUCT = `/order`;
+export const UPDATE_ORDER_STATUS = (orderId) => `/order/orderStatusUpdate?orderId=${orderId}`;
 
 // CropSense AI
 export const CROP_PREDICTOR = (
@@ -46,3 +47,5 @@ export const GRAPH = `/graph`;
 
 // Seller Orders
 export const GET_SELLER_ORDERS = `/order`;
+
+export const GET_USER_ORDERS = (userId) => `/order/user?userId=${userId}`;

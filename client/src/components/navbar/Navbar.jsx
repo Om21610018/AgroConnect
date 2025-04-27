@@ -92,12 +92,22 @@ function Navbar() {
                       console.log("User log out clicked");
                       setCookie("user_access_token", "", { expires: new Date(0) });
                       setCookie("userName", "", { expires: new Date(0) });
+                      setCookie("email", "", { expires: new Date(0) });
                       notify("User Logged Out", "info");
                       navigate("/");
                     }}
                   >
                     <a className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0  whitespace-nowrap">
                       User Logout
+                    </a>
+                  </li>
+                  <li
+                    onClick={() => {
+                      navigate("/customerorders");
+                    }}
+                  >
+                    <a className="block px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-green-700 md:p-0  whitespace-nowrap">
+                      Orders
                     </a>
                   </li>
                 </ul>
@@ -149,6 +159,7 @@ function Navbar() {
                       Seller Logout
                     </a>
                   </li>
+                  
                 </ul>
               </div>
             )}

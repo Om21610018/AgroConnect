@@ -111,7 +111,7 @@ const login = async (req, res) => {
       // if (type === "seller") {
       //   setCookie(res, "brandName", data.brandName);
       // }
-
+      
       return res.status(200).send({
         message: `${capitalizeFirstLetter(type)} login successful`,
         cookies: {
@@ -120,6 +120,7 @@ const login = async (req, res) => {
             data._id.toString()
           ),
           ...(type === "seller" && { brandName: data.brandName }),
+          email: email
         },
       });
     }

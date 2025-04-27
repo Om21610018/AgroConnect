@@ -62,8 +62,84 @@ const showOrdersBySeller = async (req, res) => {
 };
 
 
+const showOrdersByUser = async (req, res) => {
+  try {
+    const { userId, email } = req.query;
+
+    let query = {};
+    if (userId) {
+      query.userId = userId;
+    } else if (email) {
+      query = { ...query, "userId": await getUserIdByEmail(email) };
+      if (!query.userId) {
+        return res.status(404).send({ message: "User not found" });
+      }
+    } else {
+      return res.status(400).send({ message: "User ID or email required" });
+    }
+
+    let data = await Order.find(query)
+      .populate({
+        path: "productId",
+        select: "image category name measuringUnit pricePerUnit",
+      })
+      .populate({ path: "userId", select: "name email contact" })
+      .lean();
+
+    data = data.map((order) => ({
+      ...order,
+      orderDate: new Date(order.orderDate),
+      totalAmount: order.orderQty * order.productId.pricePerUnit,
+    })).sort((a, b) => b.orderDate - a.orderDate);
+
+    res.status(200).send(data);
+  } catch (error) {
+    res.status(500).send("Something went wrong!");
+    console.log(error);
+  }
+};
+
+// Update Order Status
+
+const updateOrderStatus = async (req, res) => {
+  try {
+    console.log("Update Order Status Request:", req.body, req.query);
+    const { orderId } = req.query;
+    const { status } = req.body;
+
+    if (!["pending", "delivered", "cancelled"].includes(status)) {
+      return res.status(400).send({ message: "Invalid status value" });
+    }
+
+    const updatedOrder = await Order.findByIdAndUpdate(
+      orderId,
+      { status },
+      { new: true }
+    );
+
+    if (!updatedOrder) {
+      return res.status(404).send({ message: "Order not found" });
+    }
+
+    res.status(200).send({ message: "Order status updated", order: updatedOrder });
+  } catch (error) {
+    res.status(500).send("Something went wrong!");
+    console.log(error);
+  }
+};
+
+// Helper function to get userId by email (requires User model)
+const User = require("../models/userSchema");
+const getUserIdByEmail = async (email) => {
+  const user = await User.findOne({ email });
+  return user ? user._id : null;
+};
 
 module.exports = {
   addOrder,
   showOrdersBySeller,
+  showOrdersByUser, // <-- export the new controller
+  updateOrderStatus, // <-- export the new controller
 };
+
+
