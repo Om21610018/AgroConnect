@@ -3,3 +3,4 @@ torchaudio
 transformers
 numpy
 flask
+gTTS

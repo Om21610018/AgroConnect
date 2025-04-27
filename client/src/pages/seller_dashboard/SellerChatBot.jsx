@@ -5,42 +5,34 @@ import { FaPlay, FaPause, FaRedo } from "react-icons/fa";
 
 const SellerChatBot = () => {
   const [responseText, setResponseText] = useState("");
+  const [marathiText, setMarathiText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [recordedAudio, setRecordedAudio] = useState(null);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [hasSpoken, setHasSpoken] = useState(false);
+
+  // Speech synthesis states
+  const [isHindiSpeaking, setIsHindiSpeaking] = useState(false);
+  const [isMarathiSpeaking, setIsMarathiSpeaking] = useState(false);
+  const [isHindiPaused, setIsHindiPaused] = useState(false);
+  const [isMarathiPaused, setIsMarathiPaused] = useState(false);
+
+  // Refs for speech synthesis
   const synthRef = useRef(window.speechSynthesis);
-  const utteranceRef = useRef(null);
-  const audioElementRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isSpeechPaused, setIsSpeechPaused] = useState(false);
+  const hindiUtteranceRef = useRef(null);
+  const marathiUtteranceRef = useRef(null);
 
   const handleRecordingComplete = async (blob) => {
     try {
       const wavBlob = await convertToWav(blob);
-      const audioFile = new File([wavBlob], "recording.wav", { type: "audio/wav" });
+      const audioFile = new File([wavBlob], "recording.wav", {
+        type: "audio/wav",
+      });
 
       setRecordedAudio({
         file: audioFile,
         blob: wavBlob,
         url: URL.createObjectURL(wavBlob),
       });
-
-      if (audioElementRef.current) {
-        document.body.removeChild(audioElementRef.current);
-      }
-
-      const audio = document.createElement("audio");
-      audio.src = URL.createObjectURL(wavBlob);
-      audio.controls = true;
-      audio.className = "mt-4 w-full";
-      document.body.appendChild(audio);
-      audioElementRef.current = audio;
-
-      audio.addEventListener("play", () => setIsPlaying(true));
-      audio.addEventListener("pause", () => setIsPlaying(false));
-      audio.addEventListener("ended", () => setIsPlaying(false));
 
       setError("");
     } catch (error) {
@@ -62,12 +54,24 @@ const SellerChatBot = () => {
       const formData = new FormData();
       formData.append("file", recordedAudio.file);
 
-      const response = await axios.post("http://localhost:8000/chatbot/ask", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const response = await axios.post(
+        "http://localhost:8000/chatbot/ask",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
 
+      // Set translated text (Hindi)
       setResponseText(response.data.translatedText);
-      speakResponse(response.data.translatedText);
+
+      // Set Marathi text if available in the response
+      if (response.data.marathiText) {
+        setMarathiText(response.data.marathiText);
+      }
+
+      // Speak Hindi response
+      speakHindiResponse(response.data.translatedText);
     } catch (error) {
       console.error("Error sending audio to backend:", error);
       setError("Failed to process audio. Please try again.");
@@ -84,7 +88,8 @@ const SellerChatBot = () => {
       reader.onloadend = async () => {
         try {
           const arrayBuffer = reader.result;
-          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const audioContext = new (window.AudioContext ||
+            window.webkitAudioContext)();
           const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
           const wavBuffer = audioBufferToWav(audioBuffer);
           const wavBlob = new Blob([wavBuffer], { type: "audio/wav" });
@@ -142,12 +147,13 @@ const SellerChatBot = () => {
     }
   };
 
-  const speakResponse = (text) => {
+  // Speech synthesis for Hindi response
+  const speakHindiResponse = (text) => {
     if (!text) return;
 
-    if (synthRef.current.speaking) {
-      synthRef.current.cancel();
-    }
+    // Cancel any ongoing speech
+    synthRef.current.cancel();
+ 
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "hi-IN";
@@ -155,46 +161,110 @@ const SellerChatBot = () => {
     utterance.pitch = 1.1;
 
     utterance.onstart = () => {
-      setIsSpeaking(true);
-      setIsSpeechPaused(false);
+      setIsHindiSpeaking(true);
+      setIsHindiPaused(false);
+      // Stop Marathi speech if it's playing
+      setIsMarathiSpeaking(false);
+      setIsMarathiPaused(false);
     };
 
     utterance.onend = () => {
-      setIsSpeaking(false);
-      setHasSpoken(true);
-      setIsSpeechPaused(false);
+      setIsHindiSpeaking(false);
+      setIsHindiPaused(false);
     };
 
-    utteranceRef.current = utterance;
+    hindiUtteranceRef.current = utterance;
     synthRef.current.speak(utterance);
   };
 
-  const toggleSpeech = () => {
-    if (synthRef.current.speaking && !synthRef.current.paused) {
+  // Speech synthesis for Marathi response
+  const speakMarathiResponse = (text) => {
+    if (!text) return;
+
+    // Cancel any ongoing speech
+    synthRef.current.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "mr-IN"; // Marathi language code
+    utterance.rate = 1;
+    utterance.pitch = 1.1;
+    
+    utterance.onstart = () => {
+      setIsMarathiSpeaking(true);
+      setIsMarathiPaused(false);
+      // Stop Hindi speech if it's playing
+      setIsHindiSpeaking(false);
+      setIsHindiPaused(false);
+    };
+
+    utterance.onend = () => {
+      setIsMarathiSpeaking(false);
+      setIsMarathiPaused(false);
+    };
+
+    marathiUtteranceRef.current = utterance;
+    synthRef.current.speak(utterance);
+  };
+
+  // Toggle speech for Hindi
+  const toggleHindiSpeech = () => {
+    if (!hindiUtteranceRef.current) {
+      // If no utterance yet, create and start speaking
+      speakHindiResponse(responseText);
+      return;
+    }
+
+    if (
+      synthRef.current.speaking &&
+      !synthRef.current.paused &&
+      isHindiSpeaking
+    ) {
       synthRef.current.pause();
-      setIsSpeechPaused(true);
-      setIsSpeaking(false);
-    } else if (synthRef.current.paused) {
+      setIsHindiPaused(true);
+      setIsHindiSpeaking(false);
+    } else if (synthRef.current.paused && isHindiPaused) {
       synthRef.current.resume();
-      setIsSpeechPaused(false);
-      setIsSpeaking(true);
+      setIsHindiPaused(false);
+      setIsHindiSpeaking(true);
     }
   };
 
-  const handleRestart = () => {
+  // Toggle speech for Marathi
+  const toggleMarathiSpeech = () => {
+    if (!marathiUtteranceRef.current) {
+      // If no utterance yet, create and start speaking
+      speakMarathiResponse(marathiText);
+      return;
+    }
+
+    if (
+      synthRef.current.speaking &&
+      !synthRef.current.paused &&
+      isMarathiSpeaking
+    ) {
+      synthRef.current.pause();
+      setIsMarathiPaused(true);
+      setIsMarathiSpeaking(false);
+    } else if (synthRef.current.paused && isMarathiPaused) {
+      synthRef.current.resume();
+      setIsMarathiPaused(false);
+      setIsMarathiSpeaking(true);
+    }
+  };
+
+  // Restart Hindi speech
+  const restartHindiSpeech = () => {
     if (responseText) {
       synthRef.current.cancel();
-      speakResponse(responseText);
+      speakHindiResponse(responseText);
     }
   };
 
-  const playRecordedAudio = () => {
-    if (audioElementRef.current) {
-      if (isPlaying) {
-        audioElementRef.current.pause();
-      } else {
-        audioElementRef.current.play();
-      }
+  // Restart Marathi speech
+  const restartMarathiSpeech = () => {
+    if (marathiText) {
+      synthRef.current.cancel();
+      speakMarathiResponse(marathiText);
     }
   };
 
@@ -206,7 +276,10 @@ const SellerChatBot = () => {
           <h2 className="text-xl font-semibold mb-3">Record your message</h2>
           <AudioRecorder
             onRecordingComplete={handleRecordingComplete}
-            audioTrackConstraints={{ noiseSuppression: true, echoCancellation: true }}
+            audioTrackConstraints={{
+              noiseSuppression: true,
+              echoCancellation: true,
+            }}
             downloadOnSavePress={false}
             downloadFileExtension="wav"
           />
@@ -214,37 +287,69 @@ const SellerChatBot = () => {
 
         {recordedAudio && (
           <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-3">Preview your recording</h2>
+            <h2 className="text-xl font-semibold mb-3">Your recording</h2>
+            <audio src={recordedAudio.url} controls className="w-full mb-4" />
+            <button
+              onClick={handleSubmit}
+              disabled={isLoading}
+              className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded disabled:bg-gray-400 w-full"
+            >
+              {isLoading ? "Processing..." : "Submit Recording"}
+            </button>
+          </div>
+        )}
+
+        {error && <div className="mt-4 text-red-500 mb-6">{error}</div>}
+
+        {responseText && !isLoading && (
+          <div className="mt-6 p-4 bg-gray-50 rounded-md mb-6">
+            <h2 className="text-lg font-semibold mb-2">Hindi Response:</h2>
+            <div className="whitespace-pre-line mb-3">{responseText}</div>
             <div className="flex gap-4">
               <button
-                onClick={playRecordedAudio}
-                className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
+                onClick={restartHindiSpeech}
+                className="text-blue-500 hover:text-blue-700"
               >
-                {isPlaying ? "Pause" : "Play Recording"}
+                <FaRedo size={22} title="Play from start" />
               </button>
               <button
-                onClick={handleSubmit}
-                disabled={isLoading}
-                className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded disabled:bg-gray-400"
+                onClick={toggleHindiSpeech}
+                className="text-blue-500 hover:text-blue-700"
               >
-                {isLoading ? "Processing..." : "Submit Recording"}
+                {isHindiPaused ? (
+                  <FaPlay size={22} title="Resume" />
+                ) : isHindiSpeaking ? (
+                  <FaPause size={22} title="Pause" />
+                ) : (
+                  <FaPlay size={22} title="Play" />
+                )}
               </button>
             </div>
           </div>
         )}
 
-        {error && <div className="mt-4 text-red-500">{error}</div>}
-
-        {responseText && !isLoading && (
-          <div className="mt-6 p-4 bg-gray-50 rounded-md">
-            <h2 className="text-lg font-semibold mb-2">Response:</h2>
-            <div className="whitespace-pre-line mb-3">{responseText}</div>
+        {marathiText && !isLoading && (
+          <div className="mt-6 p-4 bg-gray-50 rounded-md mb-6">
+            <h2 className="text-lg font-semibold mb-2">Marathi Response:</h2>
+            <div className="whitespace-pre-line mb-3">{marathiText}</div>
             <div className="flex gap-4">
-              <button onClick={handleRestart}>
+              <button
+                onClick={restartMarathiSpeech}
+                className="text-blue-500 hover:text-blue-700"
+              >
                 <FaRedo size={22} title="Play from start" />
               </button>
-              <button onClick={toggleSpeech}>
-                {isSpeechPaused ? <FaPlay size={22} title="Resume" /> : <FaPause size={22} title="Pause" />}
+              <button
+                onClick={toggleMarathiSpeech}
+                className="text-blue-500 hover:text-blue-700"
+              >
+                {isMarathiPaused ? (
+                  <FaPlay size={22} title="Resume" />
+                ) : isMarathiSpeaking ? (
+                  <FaPause size={22} title="Pause" />
+                ) : (
+                  <FaPlay size={22} title="Play" />
+                )}
               </button>
             </div>
           </div>

@@ -114,12 +114,40 @@ exports.chatbotController = [
           throw new Error("No valid text found in the API response.");
         }
 
-        // Respond with the extracted text
-        res.json({
-          filePath: audioFilePath,
-          translatedText: responseText || "No transcription returned",
-          externalApiResponse: responseText,
-        });
+        // Send the responseText to the Marathi-to-speech API
+        try {
+          const marathiSpeechResponse = await axios.post(
+            "http://localhost:6000/marathi-to-speech",
+            { text: responseText },
+            {
+              headers: {
+          "Content-Type": "application/json",
+              },
+            }
+          );
+          console.log("Marathi-to-speech API response:", marathiSpeechResponse.data);
+          const audioFilePathResponse = marathiSpeechResponse?.data?.file_path
+        
+          if (!audioFilePathResponse) {
+            throw new Error("No audio file path returned from Marathi-to-speech API.");
+          }
+
+          console.log("Audio file path from Marathi-to-speech API:", audioFilePathResponse);
+
+          // Respond with the extracted text and audio file path
+          res.json({
+            filePath: audioFilePath,
+            translatedText: responseText || "No transcription returned",
+            externalApiResponse: responseText,
+            marathiAudioFilePath: audioFilePathResponse,
+          });
+        } catch (marathiSpeechError) {
+          console.error("Error calling Marathi-to-speech API:", marathiSpeechError.message);
+          res.status(500).json({
+            error: "Failed to get Marathi audio file",
+            details: marathiSpeechError.message,
+          });
+        }
       } catch (transcriptionError) {
         console.error("Error calling transcription service:", transcriptionError.message);
         res.status(500).json({
