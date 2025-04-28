@@ -37,7 +37,7 @@ function Navbar() {
   const isUserLoggedIn = !!cookies.user_access_token;
   const isSellerLoggedIn = !!cookies.seller_access_token;
 
-  const userName = cookies.userName || "User";
+  userName = cookies.userName || "User";
   const sellerName = cookies.userName || "Seller";
 
   useEffect(() => {
