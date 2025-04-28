@@ -12,6 +12,11 @@ import { CiNoWaitingSign } from "react-icons/ci";
 import { useParams } from "react-router-dom";
 import BoxSkeleton from "../../components/skeleton/BoxSkeleton";
 import ShareButton from "../../components/button/ShareButton";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+import Slider from "react-slick";
+
+
 
 function ProductDetails() {
   const dispatch = useDispatch();
@@ -84,20 +89,60 @@ function ProductDetails() {
     dispatch(removeFromCart(productDashboardData?._id));
   };
 
+  // const mediaItems = productDashboardData?.media || [
+  //   { type: "image", url: "https://plus.unsplash.com/premium_photo-1667030474693-6d0632f97029?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" },
+  //   { type: "image", url: "https://images.unsplash.com/photo-1573865526739-10659fec78a5?q=80&w=1430&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" },
+  //   { type: "video", url: "https://www.youtube.com/watch?v=Pj0HbO0LI7E" }, // Sample video
+  // ];
+
+  const mediaItems = productDashboardData.media.map(item => ({
+    type: item.fileType,  // "image" or "video"
+    url: item.filePath,   // Cloudinary URL or any other source
+  }));
+  console.log(productDashboardData.media);
+
+  const sliderSettings = {
+    dots: true,
+    infinite: mediaItems.length > 1, // Disable infinite loop if only 1 image
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: mediaItems.length > 1, // Disable autoplay if only 1 image
+    autoplaySpeed: 3000,
+    arrows: true,
+    adaptiveHeight: false,
+  };
+
+
   return (
     <>
       <div className="lg:w-11/12 mx-auto flex flex-wrap">
+
         {isMainDataLoading ? (
-          <BoxSkeleton height={"lg:h-auto h-64 "} width={"lg:w-1/2 w-full"} />
+          <BoxSkeleton height="h-64" width="lg:w-1/2 w-full" />
         ) : (
-          <div className="lg:w-1/2 w-full h-64 md:h-auto  rounded relative">
-            <img
-            loading="lazy"
-              className="object-cover object-center h-full w-full"
-              src={productDashboardData?.image}
-            />
+          <div className="lg:w-1/2 w-full h-[300px] md:h-[350px] rounded relative mx-auto">
+            <Slider {...sliderSettings} className="h-full w-full">
+              {mediaItems.map((item, index) => (
+                <div key={index} className="h-[300px] md:h-[350px] w-full flex justify-center items-center bg-gray-200">
+                  {item.type === "image" ? (
+                    <img
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                      src={item.url}
+                      alt={productDashboardData?.name || "Product Image"}
+                    />
+                  ) : (
+                    <video className="w-full h-full object-cover" controls>
+                      <source src={item.url} type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                  )}
+                </div>
+              ))}
+            </Slider>
             <span className="absolute top-0 right-0 m-2">
-              <ShareButton url={window.location.href}/>
+              <ShareButton url={window.location.href} />
             </span>
           </div>
         )}
@@ -188,13 +233,12 @@ function ProductDetails() {
             </div>
 
             {productDashboardData?.minimumOrderQuantity <=
-            productDashboardData?.quantity ? (
+              productDashboardData?.quantity ? (
               <button
-                className={`flex mb-2 md:mb-4 mt-4 md:mt-2  text-white ${
-                  isProductInCart
-                    ? "bg-amber-500 hover:bg-amber-600"
-                    : " bg-[#e11d48] hover:bg-[#e5345a]"
-                } border-0 py-4 px-12 focus:outline-none rounded`}
+                className={`flex mb-2 md:mb-4 mt-4 md:mt-2  text-white ${isProductInCart
+                  ? "bg-amber-500 hover:bg-amber-600"
+                  : " bg-[#e11d48] hover:bg-[#e5345a]"
+                  } border-0 py-4 px-12 focus:outline-none rounded`}
                 onClick={(e) => {
                   e.preventDefault();
                   if (isProductInCart) {

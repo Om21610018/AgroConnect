@@ -15,9 +15,7 @@ function SellerProductOperation() {
 
   const { updateProduct, addProduct, isLoading, setIsLoading } = useProducts();
 
-  const productEditData = useSelector(
-    (state) => state.sellerEditProductReducer
-  );
+  const productEditData = useSelector((state) => state.sellerEditProductReducer) || {}; // Prevent undefined
 
   const [renderMap, setRenderMap] = useState(false);
 
@@ -30,26 +28,28 @@ function SellerProductOperation() {
       setLong(productEditData.location.longitude);
       setRenderMap(true);
     }
+    // console.log("Product Edit Data:", productEditData);
   }, [productEditData]);
 
   const [formData, setFormData] = useState({
-    image: operation === "edit" ? productEditData.image : null,
+    image: operation === "edit" ? productEditData?.image ?? null : null,
+    media: operation === "edit" ? productEditData?.media ?? [] : [],
     brand: cookies.brandName,
-    category: operation === "edit" ? productEditData.category : null,
-    name: operation === "edit" ? productEditData.name : null,
-    description: operation === "edit" ? productEditData.description : null,
-    pricePerUnit: operation === "edit" ? productEditData.pricePerUnit : null,
-    measuringUnit: operation === "edit" ? productEditData.measuringUnit : null,
-    minimumOrderQuantity:
-      operation === "edit" ? productEditData.minimumOrderQuantity : null,
+    category: operation === "edit" ? productEditData?.category ?? "" : "",
+    name: operation === "edit" ? productEditData?.name ?? "" : "",
+    description: operation === "edit" ? productEditData?.description ?? "" : "",
+    pricePerUnit: operation === "edit" ? productEditData?.pricePerUnit ?? "" : "",
+    measuringUnit: operation === "edit" ? productEditData?.measuringUnit ?? "" : "",
+    minimumOrderQuantity: operation === "edit" ? productEditData?.minimumOrderQuantity ?? "" : "",
     location: {
-      latitude: operation === "edit" ? productEditData.location.latitude : null,
-      longitude:
-        operation === "edit" ? productEditData.location.longitude : null,
+      latitude: operation === "edit" ? productEditData?.location?.latitude ?? 0 : 0,
+      longitude: operation === "edit" ? productEditData?.location?.longitude ?? 0 : 0,
     },
-    quantity: operation === "edit" ? productEditData.quantity : null,
-    shelfLife: operation === "edit" ? productEditData.shelfLife : null,
+    quantity: operation === "edit" ? productEditData?.quantity ?? "" : "",
+    shelfLife: operation === "edit" ? productEditData?.shelfLife ?? "" : "",
+    sellerId: productEditData?.sellerId ?? "", // Prevent crashes if sellerId is missing
   });
+
 
   useEffect(() => {
     setFormData((prevData) => ({
@@ -58,8 +58,9 @@ function SellerProductOperation() {
     }));
   }, [lat, long]);
 
+
   const handleSubmit = async () => {
-    if (!formData.image) {
+    if (!formData.image && formData.media.length === 0) {
       notify("Please upload product image", "info");
       return;
     }
@@ -69,16 +70,21 @@ function SellerProductOperation() {
       return;
     }
 
+    // Ensure sellerId is present
+    const finalData = { ...formData, sellerId: productEditData.sellerId };
+
     setIsLoading(true);
 
     if (operation === "add") {
-      await addProduct(formData);
+      console.log("Final Data : ", finalData);
+      await addProduct(finalData);
     } else {
-      await updateProduct(productEditData._id, formData);
+      await updateProduct(productEditData._id, finalData);
     }
 
     setIsLoading(false);
   };
+
 
   return (
     <>
@@ -162,19 +168,61 @@ function SellerProductOperation() {
 
                         <input
                           type="file"
-                          accept="image/*"
+                          accept="image/*, video/*"
+                          multiple
                           className="hidden"
                           onChange={(e) => {
-                            const uploadedImage = e.target.files[0];
-                            setFormData({
-                              ...formData,
-                              image: uploadedImage,
-                            });
+                            const files = e.target.files;
+
+                            if (!files || files.length === 0) return; // Prevent empty selections
+
+                            const uploadedFiles = Array.from(files)
+                              .filter((file) => file instanceof File) // Ensure valid File objects
+                              .map((file) => ({
+                                fileName: file.name,
+                                fileType: file.type.startsWith("video") ? "video" : "image",
+                                filePath: file ? URL.createObjectURL(file) : "", // Ensure file exists before creating URL
+                                file: file, // Store actual file object
+                              }));
+
+                            setFormData((prev) => ({
+                              ...prev,
+                              image:
+                                uploadedFiles.find((file) => file.fileType === "image")?.file || prev.image, // Ensure only valid images are set
+                              media: [...(prev.media || []), ...uploadedFiles], // Append new files
+                            }));
                           }}
                         />
+
+
                       </label>
                     </div>
                   </div>
+
+                  <div className="flex flex-wrap gap-4">
+                    {formData.media.map((file, index) => (
+                      <div key={index} className="relative">
+                        {file.fileType === "image" ? (
+                          <img src={file.filePath} alt="Uploaded" className="w-32 h-32 object-cover" />
+                        ) : (
+                          <video controls className="w-32 h-32">
+                            <source src={file.filePath} type="video/mp4" />
+                            Your browser does not support the video tag.
+                          </video>
+                        )}
+                        <MdCancel
+                          className="absolute top-0 right-0 text-2xl cursor-pointer"
+                          onClick={() => {
+                            setFormData((prev) => ({
+                              ...prev,
+                              media: prev.media.filter((_, i) => i !== index),
+                            }));
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
 
                   <div className="col-span-full">
                     <InputTag
