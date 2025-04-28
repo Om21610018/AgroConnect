@@ -26,7 +26,7 @@ function Navbar() {
   const [openCart, setOpenCart] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showSellerDropdown, setShowSellerDropdown] = useState(false);
-  const [userName, setUserName] = useState("");
+  const [userName, setUserName] = useState("User");
 
   useEffect(() => {
     if (cookies.userName) {
@@ -37,7 +37,7 @@ function Navbar() {
   const isUserLoggedIn = !!cookies.user_access_token;
   const isSellerLoggedIn = !!cookies.seller_access_token;
 
-  userName = cookies.userName || "User";
+  // const userName = cookies.userName || "User";
   const sellerName = cookies.userName || "Seller";
 
   useEffect(() => {

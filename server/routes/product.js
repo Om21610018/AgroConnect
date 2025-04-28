@@ -19,7 +19,7 @@ router.post("/", verifyAccessToken, uploadMiddleware, productController.addProdu
 
 
 // Search Products
-router.get("/search", productController.searchProducts);
+// router.get("/search", productController.searchProducts);
 
 // Get Product Data By Category
 router.get("/category/:category", productController.getProductDataByCategory);

@@ -7,7 +7,7 @@ import Heading from "../../components/heading/Heading";
 import useOrder from "../../hooks/orders/useOrder";
 // <<<<<<< main
 import useOrderSearch from "../../hooks/search/useOrderSearch";
-=======
+// =======
 // import axios from "axios";
 // import { ORDER_PRODUCT, UPDATE_ORDER_STATUS } from "../../constants/apiEndpoints";
 // >>>>>>> main
@@ -28,40 +28,40 @@ function SellerOrderRequests() {
     getOrders();
   }, []);
 
-// <<<<<<< main
+  // <<<<<<< main
   const { searchQuery, setSearchQuery, filteredOrders } = useOrderSearch(data);
 
   console.log(data);
-// =======
-//   // Update order status
-//   const handleStatusChange = async (orderId, newStatus) => {
-//     console.log("Updating order status:", orderId, newStatus);
-//     try {
-//       await axios.patch(`http://localhost:8000/order/orderStatusUpdate?orderId=${orderId}`, { status: newStatus });
-//       setData((prev) =>
-//         prev.map((item) =>
-//           item._id === orderId ? { ...item, status: newStatus } : item
-//         )
-//       );
-//     } catch (err) {
-//       alert("Failed to update status");
-//     }
-//   };
+  // =======
+  //   // Update order status
+  //   const handleStatusChange = async (orderId, newStatus) => {
+  //     console.log("Updating order status:", orderId, newStatus);
+  //     try {
+  //       await axios.patch(`http://localhost:8000/order/orderStatusUpdate?orderId=${orderId}`, { status: newStatus });
+  //       setData((prev) =>
+  //         prev.map((item) =>
+  //           item._id === orderId ? { ...item, status: newStatus } : item
+  //         )
+  //       );
+  //     } catch (err) {
+  //       alert("Failed to update status");
+  //     }
+  //   };
 
-//   // Status color helper
-//   const getStatusColor = (status) => {
-//     switch (status?.toLowerCase()) {
-//       case "delivered":
-//         return "text-green-600";
-//       case "cancelled":
-//         return "text-red-600";
-//       case "pending":
-//       default:
-//         return "text-yellow-500";
-//     }
-//   };
+  //   // Status color helper
+  //   const getStatusColor = (status) => {
+  //     switch (status?.toLowerCase()) {
+  //       case "delivered":
+  //         return "text-green-600";
+  //       case "cancelled":
+  //         return "text-red-600";
+  //       case "pending":
+  //       default:
+  //         return "text-yellow-500";
+  //     }
+  //   };
 
-// >>>>>>> main
+  // >>>>>>> main
   return (
     <>
       {/* Table Header */}
@@ -111,7 +111,6 @@ function SellerOrderRequests() {
                       className="border-b transition duration-300 ease-in-out hover:bg-neutral-100 text-center"
                       key={index}
                     >
-// <<<<<<< main
                       <td className="px-6 py-4 font-medium">{index + 1}</td>
                       <td className="px-6 py-2">
                         <img src={item.productId.image} alt="Image" loading="lazy" />
@@ -165,30 +164,6 @@ function SellerOrderRequests() {
                       </td>
                     </tr>
                   ))}
-// =======
-//                       {item.orderLocation.latitude.toFixed(4)},{" "}
-//                       {item.orderLocation.longitude.toFixed(4)}
-//                     </td>
-//                     <td className=" px-6 py-4 max-w-sm truncate hover:whitespace-normal">
-//                       Rs.{item.totalAmount}
-//                     </td>
-//                     <td className="px-6 py-4 max-w-sm truncate hover:whitespace-normal">
-//                       <span className={`flex justify-center items-center ${getStatusColor(item.status)}`}>
-//                         <GoDotFill className="mr-1" />
-//                         <select
-//                           value={item.status}
-//                           onChange={e => handleStatusChange(item._id, e.target.value)}
-//                           className="ml-1 border rounded px-1 py-0.5 text-xs"
-//                         >
-//                           <option value="pending">Pending</option>
-//                           <option value="delivered">Delivered</option>
-//                           <option value="cancelled">Cancelled</option>
-//                         </select>
-//                       </span>
-//                     </td>
-//                   </tr>
-//                 ))}
-// >>>>>>> main
               </tbody>
             </table>
           )}

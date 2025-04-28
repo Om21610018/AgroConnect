@@ -149,26 +149,26 @@ const deleteProduct = async (req, res) => {
 // <<<<<<< main
 // Get Product Dashboard Data
 const getProductDashboardData = async (req, res) => {
-// =======
+  // =======
 
-// // Search product
-// const searchProducts = async (req, res) => {
-//   try {
-//     const { query } = req.query;
-//     const products = await Product.find({
-//       $text: { $search: query }
-//     }).lean();
+  // // Search product
+  // const searchProducts = async (req, res) => {
+  //   try {
+  //     const { query } = req.query;
+  //     const products = await Product.find({
+  //       $text: { $search: query }
+  //     }).lean();
 
-//     res.status(200).send(products);
-//   } catch (error) {
-//     res.status(500).send({ message: "Something went wrong!" });
-//     console.log(error);
-//   }
-// };
+  //     res.status(200).send(products);
+  //   } catch (error) {
+  //     res.status(500).send({ message: "Something went wrong!" });
+  //     console.log(error);
+  //   }
+  // };
 
-// // Get Seller Dashboard Data
-// const getProductDataBySellerId = async (req, res) => {
-// >>>>>>> main
+  // // Get Seller Dashboard Data
+  // const getProductDataBySellerId = async (req, res) => {
+  // >>>>>>> main
   try {
     let data = await Product.findById(req.params.productId)
       .select("shelfLife quantity description")
@@ -238,6 +238,6 @@ module.exports = {
   updateProduct,
   getProductStocksById,
   getProductDashboardData,
-  getMainProductDataById,
-  searchProducts
+  getMainProductDataById
+  // searchProducts
 };
