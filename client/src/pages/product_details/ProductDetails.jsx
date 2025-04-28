@@ -13,11 +13,13 @@ import { CiNoWaitingSign } from "react-icons/ci";
 import { useParams } from "react-router-dom";
 import BoxSkeleton from "../../components/skeleton/BoxSkeleton";
 import ShareButton from "../../components/button/ShareButton";
+import { useCookies } from "react-cookie";
+import axios from "axios";
 
 function ProductDetails() {
   const dispatch = useDispatch();
   const { productId } = useParams();
-
+  const [cookies] = useCookies(["userId", "email"]);
   const productData = useSelector((state) => state.productReducer);
   const cartData = useSelector((state) => state.cartReducer);
 
@@ -30,12 +32,86 @@ function ProductDetails() {
   const [negotiatedPrice, setNegotiatedPrice] = useState("");
   const [negotiateError, setNegotiateError] = useState("");
   const [negotiationSubmitted, setNegotiationSubmitted] = useState(false);
-  
+
+  // New state for user's latest negotiation
+  const [latestNegotiation, setLatestNegotiation] = useState(null);
+
   useStockUpdateSocket(setProductDashboardData);
 
   useEffect(() => {
     setProductDashboardData(productData);
   }, [productData]);
+
+  // Fetch latest negotiation for this user and product
+  useEffect(() => {
+    const fetchNegotiations = async () => {
+      try {
+        if ( !cookies.email ) return;
+        const res = await axios.get(
+          `http://localhost:8000/negotiation?email=${cookies.email}`
+        );
+
+        console.log("Negotiations Response:", res.data);
+        if (Array.isArray(res.data.negotiations)) {
+          // Find the most recent negotiation matching all fields
+          const filtered = res.data.negotiations.filter(
+            (n) =>
+              n.userId?._id === cookies.userId &&
+              n.productId?._id === productId 
+          );
+
+          console.log("Filtered Negotiations:", filtered);
+          // Sort by createdAt descending and pick the latest
+          if (filtered.length > 0) {
+            const sorted = filtered.sort(
+              (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+            );
+            setLatestNegotiation(sorted[0]);
+          } else {
+            setLatestNegotiation(null);
+          }
+        } else {
+          setLatestNegotiation(null);
+        }
+      } catch (err) {
+        setLatestNegotiation(null);
+      }
+    };
+    fetchNegotiations();
+    // eslint-disable-next-line
+  }, [cookies.userId, cookies.email, productId, productDashboardData?.sellerId, negotiationSubmitted]);
+
+  // Helper: get the price to show in cart based on negotiation status
+  const getCartPrice = () => {
+    if (
+      latestNegotiation &&
+      latestNegotiation.status === "accepted" &&
+      latestNegotiation.negotiatedPrice
+    ) {
+      return latestNegotiation.negotiatedPrice;
+    }
+    return productDashboardData?.pricePerUnit;
+  };
+
+  // Update cart price if negotiation is accepted and product is in cart
+  useEffect(() => {
+    if (
+      latestNegotiation &&
+      latestNegotiation.status === "accepted" &&
+      cartData.some((item) => item._id === productDashboardData?._id)
+    ) {
+      // Update cart with negotiated price
+      // dispatch(
+      //   addToCart({
+      //     ...cartData.find((item) => item._id === productDashboardData?._id),
+      //     pricePerUnit: latestNegotiation.negotiatedPrice,
+      //     currentPrice:
+      //       latestNegotiation.negotiatedPrice *
+      //       productDashboardData.minimumOrderQuantity,
+      //   })
+      // );
+    }
+  }, [latestNegotiation, cartData, productDashboardData, dispatch]);
 
   const isProductInCart = cartData.some(
     (item) => item._id === productDashboardData?._id
@@ -43,7 +119,6 @@ function ProductDetails() {
 
   const fetchProductDashboardData = async () => {
     let data = await getProductUserDashboardData(productData?._id || productId);
-    console.log(data);
     setProductDashboardData((prevData) => {
       return {
         ...prevData,
@@ -58,7 +133,6 @@ function ProductDetails() {
       await getMainProductData(productId);
       setIsMainDataLoading(false);
     }
-
     await fetchProductDashboardData();
   };
 
@@ -77,11 +151,10 @@ function ProductDetails() {
       brand: productDashboardData.brand,
       minQty: productDashboardData.minimumOrderQuantity,
       stocksLeft: productDashboardData.quantity,
-      pricePerUnit: productDashboardData.pricePerUnit,
+      pricePerUnit: getCartPrice(),
       unit: productDashboardData.measuringUnit,
       currentPrice:
-        productDashboardData.pricePerUnit *
-        productDashboardData.minimumOrderQuantity,
+        getCartPrice() * productDashboardData.minimumOrderQuantity,
     };
     dispatch(addToCart(cartProductData));
   };
@@ -101,32 +174,106 @@ function ProductDetails() {
     setShowNegotiateModal(false);
   };
 
-  const handleNegotiateSubmit = (e) => {
+  const handleNegotiateSubmit = async (e) => {
     e.preventDefault();
-    
+
     const priceValue = parseFloat(negotiatedPrice);
-    
+
     if (!negotiatedPrice || isNaN(priceValue)) {
       setNegotiateError("Please enter a valid price");
       return;
     }
-    
+
     if (priceValue <= 0) {
       setNegotiateError("Price must be greater than zero");
       return;
     }
 
-    // Here you would typically send the negotiation request to the backend
-    console.log(`Negotiation request for ${productDashboardData?.name}: Rs.${negotiatedPrice}/${productDashboardData?.measuringUnit}`);
-    
-    // For now, we'll just simulate a successful submission
-    setNegotiationSubmitted(true);
-    setNegotiateError("");
-    
-    // Close the modal after 2 seconds
-    setTimeout(() => {
-      closeNegotiateModal();
-    }, 2000);
+    try {
+      const userId = cookies.userId;
+      const email = cookies.email;
+
+      if (!userId || !email) {
+        setNegotiateError("User not authenticated. Please log in.");
+        return;
+      }
+
+      const sellerId = productDashboardData?.sellerId;
+      const productId = productDashboardData?._id;
+      const actualPrice = productDashboardData?.pricePerUnit;
+
+      const negotiationData = {
+        email: email,
+        userId: userId,
+        sellerId: sellerId,
+        productId: productId,
+        actualPrice: actualPrice,
+        negotiatedPrice: priceValue,
+      };
+
+      if (
+        !negotiationData.email ||
+        !negotiationData.userId ||
+        !negotiationData.sellerId ||
+        !negotiationData.productId
+      ) {
+        setNegotiateError("Missing required information. Please try again.");
+        return;
+      }
+
+      const response = await axios.post(
+        "http://localhost:8000/negotiation/",
+        negotiationData
+      );
+
+      setNegotiationSubmitted(true);
+      setNegotiateError("");
+    } catch (error) {
+      setNegotiateError(
+        error.response?.data?.message || "Failed to submit negotiation."
+      );
+    }
+  };
+
+  // Negotiation status UI
+  const renderNegotiationStatus = () => {
+    if (!latestNegotiation) return null;
+    if (latestNegotiation.status === "pending") {
+      return (
+        <div className="my-4 p-3 rounded bg-yellow-50 border border-yellow-300 text-yellow-800">
+          <b>Status:</b> Your negotiation is <b>pending</b>.
+        </div>
+      );
+    }
+    if (latestNegotiation.status === "accepted") {
+      return (
+        <div className="my-4 p-3 rounded bg-green-50 border border-green-300 text-green-800">
+          <b>Status:</b> <span className="text-green-700">Accepted</span>
+          <br />
+          <b>Negotiated Price:</b> Rs. {latestNegotiation.negotiatedPrice}/
+          {productDashboardData?.measuringUnit}
+          <br />
+          <span className="text-xs text-green-700">
+            This price will be used in your cart.
+          </span>
+        </div>
+      );
+    }
+    if (latestNegotiation.status === "rejected") {
+      return (
+        <div className="my-4 p-3 rounded bg-red-50 border border-red-300 text-red-800">
+          <b>Status:</b> <span className="text-red-700">Rejected</span>
+          <br />
+          <b>Price:</b> Rs. {productDashboardData?.pricePerUnit}/
+          {productDashboardData?.measuringUnit}
+          <br />
+          <span className="text-xs text-red-700">
+            Actual price will be used in your cart.
+          </span>
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
@@ -142,7 +289,7 @@ function ProductDetails() {
               src={productDashboardData?.image}
             />
             <span className="absolute top-0 right-0 m-2">
-              <ShareButton url={window.location.href}/>
+              <ShareButton url={window.location.href} />
             </span>
           </div>
         )}
@@ -205,6 +352,9 @@ function ProductDetails() {
             </table>
           </div>
 
+          {/* Negotiation status */}
+          {renderNegotiationStatus()}
+
           <div className="flex justify-between flex-col md:flex-row">
             <div className="space-y-1">
               {isMainDataLoading ? (
@@ -225,7 +375,7 @@ function ProductDetails() {
               ) : (
                 <div className="flex justify-between">
                   <h2 className="text-2xl md:text-4xl text-left mb-1 font-medium">
-                    Rs. {productDashboardData?.pricePerUnit}/
+                    Rs. {getCartPrice()}/
                     {productDashboardData?.measuringUnit}
                   </h2>
                 </div>
@@ -280,19 +430,21 @@ function ProductDetails() {
                 )}
               </button>
             )}
-            
+
             {/* Negotiate Price Button */}
-            {!isLoading && !isMainDataLoading && productDashboardData?.quantity > 0 && (
-              <button
-                className="flex mb-2 md:mb-0 text-white bg-blue-600 hover:bg-blue-700 border-0 py-3 px-6 focus:outline-none rounded flex-1"
-                onClick={openNegotiateModal}
-              >
-                <span className="flex items-center text-lg h-full w-full justify-center">
-                  <FaHandshake className="mr-2 text-2xl" />
-                  Negotiate Price
-                </span>
-              </button>
-            )}
+            {!isLoading &&
+              !isMainDataLoading &&
+              productDashboardData?.quantity > 0 && (
+                <button
+                  className="flex mb-2 md:mb-0 text-white bg-blue-600 hover:bg-blue-700 border-0 py-3 px-6 focus:outline-none rounded flex-1"
+                  onClick={openNegotiateModal}
+                >
+                  <span className="flex items-center text-lg h-full w-full justify-center">
+                    <FaHandshake className="mr-2 text-2xl" />
+                    Negotiate Price
+                  </span>
+                </button>
+              )}
           </div>
         </div>
       </div>
@@ -302,34 +454,67 @@ function ProductDetails() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-gray-900">Negotiate Price</h3>
+              <h3 className="text-xl font-semibold text-gray-900">
+                Negotiate Price
+              </h3>
               <button
                 onClick={closeNegotiateModal}
                 className="text-gray-400 hover:text-gray-500 focus:outline-none"
               >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
-            
+
             {negotiationSubmitted ? (
               <div className="text-center py-4">
                 <div className="text-green-600 text-5xl mb-4">
-                  <svg className="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  <svg
+                    className="mx-auto h-16 w-16"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 </div>
-                <p className="text-lg font-medium text-gray-900">Your price negotiation has been submitted!</p>
-                <p className="text-gray-600 mt-2">We'll notify you once the seller responds.</p>
+                <p className="text-lg font-medium text-gray-900">
+                  Your price negotiation has been submitted!
+                </p>
+                <p className="text-gray-600 mt-2">
+                  We'll notify you once the seller responds.
+                </p>
               </div>
             ) : (
               <form onSubmit={handleNegotiateSubmit}>
                 <div className="mb-6">
                   <p className="mb-3 text-gray-600">
-                    Current price: <span className="font-bold">Rs. {productDashboardData?.pricePerUnit}/{productDashboardData?.measuringUnit}</span>
+                    Current price:{" "}
+                    <span className="font-bold">
+                      Rs. {productDashboardData?.pricePerUnit}/
+                      {productDashboardData?.measuringUnit}
+                    </span>
                   </p>
-                  <label htmlFor="negotiatePrice" className="block mb-2 text-sm font-medium text-gray-900">
+                  <label
+                    htmlFor="negotiatePrice"
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                  >
                     Your offer (Rs./{productDashboardData?.measuringUnit})
                   </label>
                   <input
@@ -343,7 +528,9 @@ function ProductDetails() {
                     onChange={(e) => setNegotiatedPrice(e.target.value)}
                   />
                   {negotiateError && (
-                    <p className="mt-2 text-sm text-red-600">{negotiateError}</p>
+                    <p className="mt-2 text-sm text-red-600">
+                      {negotiateError}
+                    </p>
                   )}
                 </div>
                 <div className="flex items-center justify-end space-x-2">

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import NavItem from "../../components/seller_dashboard/NavItem";
 import { TbMessageChatbotFilled } from "react-icons/tb";
-
+import { FaHandshake } from "react-icons/fa";
 import { FaProductHunt } from "react-icons/fa6";
 import { PiShoppingBagOpenFill } from "react-icons/pi";
 import { FaQq } from "react-icons/fa";
@@ -17,6 +17,7 @@ import { RiBardFill } from "react-icons/ri";
 import CropSenseAI from "./CropSenseAI";
 import { useCookies } from "react-cookie";
 import SellerChatBot from "./SellerChatBot";
+import SellerNegotiations from "./SellerNegotiations";
 
 
 const links = [
@@ -50,6 +51,11 @@ const links = [
     icon: <TbMessageChatbotFilled />,
     renderComponent: <SellerChatBot/>,
   },
+  {
+    text: "Negotiations",
+    icon: <FaHandshake />,
+    renderComponent: <SellerNegotiations/>,
+  },
 ];
 
 const NewSellerDashboard = () => {
@@ -80,6 +86,7 @@ const NewSellerDashboard = () => {
               console.log("Seller log out clicked");
               setCookie("seller_access_token", "", { expires: new Date(0) });
               setCookie("email", "", { expires: new Date(0) });
+              setCookie("userId", "", { expires: new Date(0) });
               setCookie("brandName", "", { expires: new Date(0) });
 
               navigate("/");
