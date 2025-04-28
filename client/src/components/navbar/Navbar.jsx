@@ -31,7 +31,7 @@ function Navbar() {
   const isSellerLoggedIn = !!cookies.seller_access_token;
 
   const userName = cookies.userName || "User";
-  const sellerName = cookies.brandName || "Seller";
+  const sellerName = cookies.userName || "Seller";
 
   useEffect(() => {
     function handleClickOutside(event) {
