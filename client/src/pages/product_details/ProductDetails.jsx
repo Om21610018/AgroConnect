@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { PiSmileySadLight } from "react-icons/pi";
 import { IoBagRemoveOutline } from "react-icons/io5";
+import { FaHandshake } from "react-icons/fa";
 import { addToCart, removeFromCart } from "../../redux/actions";
 import Heading from "../../components/heading/Heading";
 import useProducts from "../../hooks/products/useProducts";
@@ -25,6 +26,11 @@ function ProductDetails() {
 
   const [isMainDataLoading, setIsMainDataLoading] = useState(false);
   const [productDashboardData, setProductDashboardData] = useState(productData);
+  const [showNegotiateModal, setShowNegotiateModal] = useState(false);
+  const [negotiatedPrice, setNegotiatedPrice] = useState("");
+  const [negotiateError, setNegotiateError] = useState("");
+  const [negotiationSubmitted, setNegotiationSubmitted] = useState(false);
+  
   useStockUpdateSocket(setProductDashboardData);
 
   useEffect(() => {
@@ -84,6 +90,45 @@ function ProductDetails() {
     dispatch(removeFromCart(productDashboardData?._id));
   };
 
+  const openNegotiateModal = () => {
+    setShowNegotiateModal(true);
+    setNegotiatedPrice("");
+    setNegotiateError("");
+    setNegotiationSubmitted(false);
+  };
+
+  const closeNegotiateModal = () => {
+    setShowNegotiateModal(false);
+  };
+
+  const handleNegotiateSubmit = (e) => {
+    e.preventDefault();
+    
+    const priceValue = parseFloat(negotiatedPrice);
+    
+    if (!negotiatedPrice || isNaN(priceValue)) {
+      setNegotiateError("Please enter a valid price");
+      return;
+    }
+    
+    if (priceValue <= 0) {
+      setNegotiateError("Price must be greater than zero");
+      return;
+    }
+
+    // Here you would typically send the negotiation request to the backend
+    console.log(`Negotiation request for ${productDashboardData?.name}: Rs.${negotiatedPrice}/${productDashboardData?.measuringUnit}`);
+    
+    // For now, we'll just simulate a successful submission
+    setNegotiationSubmitted(true);
+    setNegotiateError("");
+    
+    // Close the modal after 2 seconds
+    setTimeout(() => {
+      closeNegotiateModal();
+    }, 2000);
+  };
+
   return (
     <>
       <div className="lg:w-11/12 mx-auto flex flex-wrap">
@@ -92,7 +137,7 @@ function ProductDetails() {
         ) : (
           <div className="lg:w-1/2 w-full h-64 md:h-auto  rounded relative">
             <img
-            loading="lazy"
+              loading="lazy"
               className="object-cover object-center h-full w-full"
               src={productDashboardData?.image}
             />
@@ -186,15 +231,18 @@ function ProductDetails() {
                 </div>
               )}
             </div>
+          </div>
 
+          {/* Buttons container */}
+          <div className="flex flex-col md:flex-row gap-3 mt-4">
             {productDashboardData?.minimumOrderQuantity <=
             productDashboardData?.quantity ? (
               <button
-                className={`flex mb-2 md:mb-4 mt-4 md:mt-2  text-white ${
+                className={`flex mb-2 md:mb-0 text-white ${
                   isProductInCart
                     ? "bg-amber-500 hover:bg-amber-600"
                     : " bg-[#e11d48] hover:bg-[#e5345a]"
-                } border-0 py-4 px-12 focus:outline-none rounded`}
+                } border-0 py-3 px-6 focus:outline-none rounded flex-1`}
                 onClick={(e) => {
                   e.preventDefault();
                   if (isProductInCart) {
@@ -217,7 +265,7 @@ function ProductDetails() {
                 )}
               </button>
             ) : (
-              <button className="flex mb-4 mt-1  text-white bg-orange-600 border-0 py-4 px-12 focus:outline-none rounded">
+              <button className="flex mb-2 md:mb-0 text-white bg-orange-600 border-0 py-3 px-6 focus:outline-none rounded flex-1">
                 {" "}
                 {isLoading ? (
                   <span className="flex items-center text-lg h-full w-full justify-center">
@@ -232,9 +280,92 @@ function ProductDetails() {
                 )}
               </button>
             )}
+            
+            {/* Negotiate Price Button */}
+            {!isLoading && !isMainDataLoading && productDashboardData?.quantity > 0 && (
+              <button
+                className="flex mb-2 md:mb-0 text-white bg-blue-600 hover:bg-blue-700 border-0 py-3 px-6 focus:outline-none rounded flex-1"
+                onClick={openNegotiateModal}
+              >
+                <span className="flex items-center text-lg h-full w-full justify-center">
+                  <FaHandshake className="mr-2 text-2xl" />
+                  Negotiate Price
+                </span>
+              </button>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Negotiate Price Modal */}
+      {showNegotiateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold text-gray-900">Negotiate Price</h3>
+              <button
+                onClick={closeNegotiateModal}
+                className="text-gray-400 hover:text-gray-500 focus:outline-none"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {negotiationSubmitted ? (
+              <div className="text-center py-4">
+                <div className="text-green-600 text-5xl mb-4">
+                  <svg className="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <p className="text-lg font-medium text-gray-900">Your price negotiation has been submitted!</p>
+                <p className="text-gray-600 mt-2">We'll notify you once the seller responds.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleNegotiateSubmit}>
+                <div className="mb-6">
+                  <p className="mb-3 text-gray-600">
+                    Current price: <span className="font-bold">Rs. {productDashboardData?.pricePerUnit}/{productDashboardData?.measuringUnit}</span>
+                  </p>
+                  <label htmlFor="negotiatePrice" className="block mb-2 text-sm font-medium text-gray-900">
+                    Your offer (Rs./{productDashboardData?.measuringUnit})
+                  </label>
+                  <input
+                    type="number"
+                    id="negotiatePrice"
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                    placeholder="Enter your price"
+                    required
+                    step="0.01"
+                    value={negotiatedPrice}
+                    onChange={(e) => setNegotiatedPrice(e.target.value)}
+                  />
+                  {negotiateError && (
+                    <p className="mt-2 text-sm text-red-600">{negotiateError}</p>
+                  )}
+                </div>
+                <div className="flex items-center justify-end space-x-2">
+                  <button
+                    type="button"
+                    onClick={closeNegotiateModal}
+                    className="text-gray-500 bg-gray-100 hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-200 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5"
+                  >
+                    Submit Offer
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }
