@@ -15,6 +15,7 @@ import ScrollToTop from "./components/scroll/ScrollToTop";
 import Footer from "./components/footer/Footer";
 import Home from "./pages/home";
 import Verify from "./pages/verify";
+import CustomerOrder from "./pages/orders/CustomerOrder";
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
               element={<ProductDashboard />}
             />
             <Route exact path="/orders" element={<Order />} />
+            <Route exact path="/customerorders" element={<CustomerOrder />} />
             <Route exact path="/map" element={<LeafletMap />} />
           </Routes>
         {/* </div> */}
