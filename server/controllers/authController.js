@@ -120,7 +120,8 @@ const login = async (req, res) => {
             data._id.toString()
           ),
           ...(type === "seller" && { brandName: data.brandName }),
-          email: email
+          email: email,
+          userId: data._id.toString(),
         },
       });
     }
