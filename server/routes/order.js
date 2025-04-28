@@ -9,5 +9,9 @@ router.post("/", verifyAccessToken, orderController.addOrder);
 // Retrieve Order Item according to Seller Id
 router.get("/", verifyAccessToken, orderController.showOrdersBySeller);
 
+// Retrieve Orders by User ID or Email
+router.get("/user", orderController.showOrdersByUser);
+// Example for routes/order.js
+router.patch("/orderStatusUpdate", orderController.updateOrderStatus);
 
 module.exports = router;

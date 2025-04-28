@@ -33,6 +33,11 @@ const orderSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  status: {
+    type: String,
+    enum: ["pending", "delivered", "cancelled"],
+    default: "pending",
+  },
 });
 
 orderSchema.index({ sellerId: 1 });

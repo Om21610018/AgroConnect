@@ -52,6 +52,7 @@ function Product() {
       ) {
         getProductData();
       }
+      console.log("This is product data : ", productData);
     };
 
     window.addEventListener("scroll", handleScroll);

@@ -26,6 +26,13 @@ function Navbar() {
   const [openCart, setOpenCart] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showSellerDropdown, setShowSellerDropdown] = useState(false);
+  const [userName, setUserName] = useState("");
+
+  useEffect(() => {
+    if (cookies.userName) {
+      setUserName(cookies.userName);
+    }
+  }, [cookies.userName]);
 
   const isUserLoggedIn = !!cookies.user_access_token;
   const isSellerLoggedIn = !!cookies.seller_access_token;

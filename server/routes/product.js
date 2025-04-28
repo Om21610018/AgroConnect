@@ -18,6 +18,9 @@ const uploadMiddleware = upload.fields([
 router.post("/", verifyAccessToken, uploadMiddleware, productController.addProduct);
 
 
+// Search Products
+router.get("/search", productController.searchProducts);
+
 // Get Product Data By Category
 router.get("/category/:category", productController.getProductDataByCategory);
 
