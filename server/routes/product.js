@@ -3,18 +3,23 @@ const router = express.Router();
 const productController = require("../controllers/productController");
 const verifyAccessToken = require("../middlewares/verifyAccessToken");
 const multer = require("multer");
+
 const upload = multer();
 
+// ✅ Fix: Use `upload.fields()` to match form-data structure
+const uploadMiddleware = upload.fields([
+  { name: "image", maxCount: 1 }, // Single image file
+  { name: "media[0][file]", maxCount: 1 },
+  { name: "media[1][file]", maxCount: 1 },
+  { name: "media[2][file]", maxCount: 1 },
+]);
+
 // Add Product
-router.post(
-  "/",
-  verifyAccessToken,
-  upload.single("image"),
-  productController.addProduct
-);
+router.post("/", verifyAccessToken, uploadMiddleware, productController.addProduct);
+
 
 // Search Products
-router.get("/search", productController.searchProducts);
+// router.get("/search", productController.searchProducts);
 
 // Get Product Data By Category
 router.get("/category/:category", productController.getProductDataByCategory);

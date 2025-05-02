@@ -35,6 +35,7 @@ const graph = require("./routes/graph.js");
 const ai = require("./routes/ai.js");
 const auth = require("./routes/auth");
 const chatbot = require("./routes/chatbot.js");
+const payment = require("./routes/payment.js");
 const negotiation = require("./routes/negotiation.js");
 
 // app.use(cors({
@@ -63,6 +64,7 @@ app.use("/faqs", faq);
 app.use("/graph", graph);
 app.use("/ai", ai);
 app.use("/chatbot", chatbot);
+app.use("/payment", payment);
 app.use("/negotiation", negotiation);
 
 server.listen(PORT, () => {

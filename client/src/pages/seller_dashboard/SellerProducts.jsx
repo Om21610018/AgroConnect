@@ -11,12 +11,12 @@ import TableSkeleton from "../../components/skeleton/TableSkeleton";
 import EmptyStateText from "../../components/empty_state/EmptyStateText";
 import Heading from "../../components/heading/Heading";
 import useProducts from "../../hooks/products/useProducts";
-
+import useProductSearch from "../../hooks/search/useProductSearch"
 
 function SellerProducts() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  
+
 
   const { getSellerProducts, deleteProduct } = useProducts();
 
@@ -55,6 +55,8 @@ function SellerProducts() {
     getProducts();
   }, [isDataUpdated]);
 
+  const { searchQuery, setSearchQuery, filteredProducts } = useProductSearch(data);
+
   return (
     <>
       {/* Table Header */}
@@ -65,6 +67,8 @@ function SellerProducts() {
             type="text"
             className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-cyan-600 focus:border-cyan-600 block w-full p-2.5"
             placeholder="Search for products"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
         <Link to="product/add" className="w-full md:w-fit text-center">
@@ -123,14 +127,14 @@ function SellerProducts() {
                 </tr>
               </thead>
               <tbody>
-                {data.map((item, index) => (
+                {filteredProducts.map((item, index) => (
                   <tr
                     className="border-b transition duration-300 ease-in-out hover:bg-neutral-100 text-center"
                     key={index}
                   >
                     <td className="px-6 py-4 font-medium">{index + 1}</td>
                     <td className="px-6 py-2">
-                      <img src={item.image} alt="Image" loading="lazy"/>
+                      <img src={item.image} alt="Image" loading="lazy" />
                     </td>
                     <td className="px-6 py-4">{item.category}</td>
                     <td className="px-6 py-4">{item.name}</td>

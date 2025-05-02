@@ -3,6 +3,7 @@ import useOrder from "../../hooks/orders/useOrder";
 import { useSelector } from "react-redux";
 import Spinner from "../../components/loading/Spinner";
 import { notify } from "../../utils/helper/notification";
+import PaymentComponent from "../../components/payment/PaymentComponent";
 
 const PaymentCard = ({
   totalAmount,
@@ -48,7 +49,7 @@ const PaymentCard = ({
         <div className="flex justify-center items-center space-x-4">
           <div className="w-8 h-8">
             <img
-            loading="lazy"
+              loading="lazy"
               className="w-full h-full"
               alt="logo"
               src="https://i.ibb.co/L8KSdNQ/image-3.png"
@@ -68,8 +69,12 @@ const PaymentCard = ({
             (totalAmount >= limitForFreeDelivery ? 0 : deliveryCharge)}
           .00
         </p>
+
       </div>
       <div className="w-full flex justify-center items-center">
+        <PaymentComponent totalAmount={totalAmount} orderProduct={orderProduct} cartData={cartData} />
+      </div>
+      {/* <div className="w-full flex justify-center items-center">
         <button
           className="hover:bg-black    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800 py-5 w-96 md:w-full bg-gray-800 text-base font-medium leading-4 text-white flex flex-row justify-center items-center"
           onClick={() => {
@@ -83,7 +88,7 @@ const PaymentCard = ({
           {isPaymentInitiated && <Spinner width="w-6" color="#ffffff" />}
           Pay Now
         </button>
-      </div>
+      </div> */}
     </div>
   );
 };
