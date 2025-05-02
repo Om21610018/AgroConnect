@@ -22,7 +22,7 @@ function Navbar() {
   const [openCart, setOpenCart] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showSellerDropdown, setShowSellerDropdown] = useState(false);
-  const [userName, setUserName] = useState("");
+  const [userName, setUserName] = useState("User");
 
   // Check if user is logged in as user or seller
   const isUserLoggedIn = Boolean(cookies.user_access_token);
@@ -33,6 +33,7 @@ function Navbar() {
       setUserName(cookies.userName);
     }
   }, [cookies.userName]);
+
 
   useEffect(() => {
     function handleClickOutside(event) {
