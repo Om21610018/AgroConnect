@@ -34,13 +34,9 @@ const faq = require("./routes/faq");
 const graph = require("./routes/graph.js");
 const ai = require("./routes/ai.js");
 const auth = require("./routes/auth");
-// <<<<<<< main
-const chatbot = require("./routes/chatbot.js")
+const chatbot = require("./routes/chatbot.js");
 const payment = require("./routes/payment.js");
-
-// =======
-// const chatbot = require("./routes/chatbot.js");
-// >>>>>>> main
+const negotiation = require("./routes/negotiation.js");
 
 // app.use(cors({
 //   origin: "*",
@@ -67,12 +63,9 @@ app.use("/order", order);
 app.use("/faqs", faq);
 app.use("/graph", graph);
 app.use("/ai", ai);
-// <<<<<<< main
-app.use("/chatbot", chatbot)
+app.use("/chatbot", chatbot);
 app.use("/payment", payment);
-// =======
-// app.use("/chatbot", chatbot);
-// >>>>>>> main
+app.use("/negotiation", negotiation);
 
 server.listen(PORT, () => {
   console.log(`Server is running on PORT: ${PORT}`);

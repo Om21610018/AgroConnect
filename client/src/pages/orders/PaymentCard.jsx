@@ -69,10 +69,26 @@ const PaymentCard = ({
             (totalAmount >= limitForFreeDelivery ? 0 : deliveryCharge)}
           .00
         </p>
+
       </div>
       <div className="w-full flex justify-center items-center">
         <PaymentComponent totalAmount={totalAmount} orderProduct={orderProduct} cartData={cartData} />
       </div>
+      {/* <div className="w-full flex justify-center items-center">
+        <button
+          className="hover:bg-black    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800 py-5 w-96 md:w-full bg-gray-800 text-base font-medium leading-4 text-white flex flex-row justify-center items-center"
+          onClick={() => {
+            if (cartData.length === 0) {
+              notify("First add some items to cart", "info");
+            } else {
+              orderNow();
+            }
+          }}
+        >
+          {isPaymentInitiated && <Spinner width="w-6" color="#ffffff" />}
+          Pay Now
+        </button>
+      </div> */}
     </div>
   );
 };
