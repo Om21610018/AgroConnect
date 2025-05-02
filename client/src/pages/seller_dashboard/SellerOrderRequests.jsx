@@ -5,12 +5,9 @@ import TableSkeleton from "../../components/skeleton/TableSkeleton";
 import EmptyStateText from "../../components/empty_state/EmptyStateText";
 import Heading from "../../components/heading/Heading";
 import useOrder from "../../hooks/orders/useOrder";
-// <<<<<<< main
 import useOrderSearch from "../../hooks/search/useOrderSearch";
-=======
-// import axios from "axios";
-// import { ORDER_PRODUCT, UPDATE_ORDER_STATUS } from "../../constants/apiEndpoints";
-// >>>>>>> main
+import axios from "axios";
+import { ORDER_PRODUCT, UPDATE_ORDER_STATUS } from "../../constants/apiEndpoints";
 
 function SellerOrderRequests() {
   const [data, setData] = useState([]);
@@ -28,40 +25,38 @@ function SellerOrderRequests() {
     getOrders();
   }, []);
 
-// <<<<<<< main
   const { searchQuery, setSearchQuery, filteredOrders } = useOrderSearch(data);
 
-  console.log(data);
-// =======
-//   // Update order status
-//   const handleStatusChange = async (orderId, newStatus) => {
-//     console.log("Updating order status:", orderId, newStatus);
-//     try {
-//       await axios.patch(`http://localhost:8000/order/orderStatusUpdate?orderId=${orderId}`, { status: newStatus });
-//       setData((prev) =>
-//         prev.map((item) =>
-//           item._id === orderId ? { ...item, status: newStatus } : item
-//         )
-//       );
-//     } catch (err) {
-//       alert("Failed to update status");
-//     }
-//   };
 
-//   // Status color helper
-//   const getStatusColor = (status) => {
-//     switch (status?.toLowerCase()) {
-//       case "delivered":
-//         return "text-green-600";
-//       case "cancelled":
-//         return "text-red-600";
-//       case "pending":
-//       default:
-//         return "text-yellow-500";
-//     }
-//   };
+  // Update order status
+  const handleStatusChange = async (orderId, newStatus) => {
+    console.log("Updating order status:", orderId, newStatus);
+    try {
+      await axios.patch(`http://localhost:8000/order/orderStatusUpdate?orderId=${orderId}`, { status: newStatus });
+      setData((prev) =>
+        prev.map((item) =>
+          item._id === orderId ? { ...item, status: newStatus } : item
+        )
+      );
+    } catch (err) {
+      alert("Failed to update status");
+    }
+  };
 
-// >>>>>>> main
+  // Status color helper
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case "delivered":
+        return "text-green-600";
+      case "cancelled":
+        return "text-red-600";
+      case "pending":
+      default:
+        return "text-yellow-500";
+    }
+  };
+
+
   return (
     <>
       {/* Table Header */}
@@ -111,14 +106,12 @@ function SellerOrderRequests() {
                       className="border-b transition duration-300 ease-in-out hover:bg-neutral-100 text-center"
                       key={index}
                     >
-// <<<<<<< main
                       <td className="px-6 py-4 font-medium">{index + 1}</td>
                       <td className="px-6 py-2">
                         <img src={item.productId.image} alt="Image" loading="lazy" />
                       </td>
                       <td className="px-6 py-4">{item.productId.category}</td>
                       <td className="px-6 py-4">{item.productId.name}</td>
-                      {/* <td className="px-6 py-4">{item.date}</td> */}
                       <td className="px-6 py-4">
                         {new Date(item.date).toLocaleString("en-GB", {
                           day: "2-digit",
@@ -130,21 +123,20 @@ function SellerOrderRequests() {
                           hour12: false, // Ensures 24-hour format
                         })}
                       </td>
-
-                      <td className="px-6 py-4 max-w-sm truncate hover:whitespace-normal">
+                      <td className=" px-6 py-4 max-w-sm truncate hover:whitespace-normal">
                         {item.userId.name}
                       </td>
-                      <td className="px-6 py-4 max-w-sm truncate hover:whitespace-normal">
+                      <td className=" px-6 py-4 max-w-sm truncate hover:whitespace-normal">
                         {item.userId.contact}
                       </td>
-                      <td className="px-6 py-4 max-w-sm truncate hover:whitespace-normal">
+                      <td className=" px-6 py-4 max-w-sm truncate hover:whitespace-normal">
                         {item.userId.email}
                       </td>
-                      <td className="px-6 py-4 max-w-sm truncate hover:whitespace-normal">
+                      <td className=" px-6 py-4 max-w-sm truncate hover:whitespace-normal">
                         {item.orderQty} {item.productId.measuringUnit}
                       </td>
                       <td
-                        className="px-6 py-4 max-w-sm cursor-pointer font-medium text-sky-700 hover:underline whitespace-nowrap"
+                        className=" px-6 py-4 max-w-sm cursor-pointer font-medium text-sky-700 hover:underline whitespace-nowrap"
                         onClick={() => {
                           navigate(
                             `/map/${item.orderLocation.latitude}/${item.orderLocation.longitude}`
@@ -154,41 +146,25 @@ function SellerOrderRequests() {
                         {item.orderLocation.latitude.toFixed(4)},{" "}
                         {item.orderLocation.longitude.toFixed(4)}
                       </td>
-                      <td className="px-6 py-4 max-w-sm truncate hover:whitespace-normal">
+                      <td className=" px-6 py-4 max-w-sm truncate hover:whitespace-normal">
                         Rs.{item.totalAmount}
                       </td>
-                      <td className="px-6 py-4 max-w-sm truncate hover:whitespace-normal text-yellow-500 font-medium">
-                        <span className="flex justify-center items-center">
+                      <td className="px-6 py-4 max-w-sm truncate hover:whitespace-normal">
+                        <span className={`flex justify-center items-center ${getStatusColor(item.status)}`}>
                           <GoDotFill className="mr-1" />
-                          Pending
+                          <select
+                            value={item.status}
+                            onChange={e => handleStatusChange(item._id, e.target.value)}
+                            className="ml-1 border rounded px-1 py-0.5 text-xs"
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="cancelled">Cancelled</option>
+                          </select>
                         </span>
                       </td>
                     </tr>
                   ))}
-// =======
-//                       {item.orderLocation.latitude.toFixed(4)},{" "}
-//                       {item.orderLocation.longitude.toFixed(4)}
-//                     </td>
-//                     <td className=" px-6 py-4 max-w-sm truncate hover:whitespace-normal">
-//                       Rs.{item.totalAmount}
-//                     </td>
-//                     <td className="px-6 py-4 max-w-sm truncate hover:whitespace-normal">
-//                       <span className={`flex justify-center items-center ${getStatusColor(item.status)}`}>
-//                         <GoDotFill className="mr-1" />
-//                         <select
-//                           value={item.status}
-//                           onChange={e => handleStatusChange(item._id, e.target.value)}
-//                           className="ml-1 border rounded px-1 py-0.5 text-xs"
-//                         >
-//                           <option value="pending">Pending</option>
-//                           <option value="delivered">Delivered</option>
-//                           <option value="cancelled">Cancelled</option>
-//                         </select>
-//                       </span>
-//                     </td>
-//                   </tr>
-//                 ))}
-// >>>>>>> main
               </tbody>
             </table>
           )}

@@ -12,13 +12,9 @@ function Navbar() {
   const [cookies, setCookie] = useCookies([
     "user_access_token",
     "seller_access_token",
-    "userName",
-    "sellerName",
     "brandName",
+    "userName"
   ]);
-
-  // console.log("cookies :", cookies);
-  // console.log("brandName :", brandName);
 
   const userDropdownRef = useRef();
   const sellerDropdownRef = useRef();
@@ -26,7 +22,11 @@ function Navbar() {
   const [openCart, setOpenCart] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showSellerDropdown, setShowSellerDropdown] = useState(false);
-  const [userName, setUserName] = useState("");
+  const [userName, setUserName] = useState("User");
+
+  // Check if user is logged in as user or seller
+  const isUserLoggedIn = Boolean(cookies.user_access_token);
+  const isSellerLoggedIn = Boolean(cookies.seller_access_token);
 
   useEffect(() => {
     if (cookies.userName) {
@@ -34,11 +34,6 @@ function Navbar() {
     }
   }, [cookies.userName]);
 
-  const isUserLoggedIn = !!cookies.user_access_token;
-  const isSellerLoggedIn = !!cookies.seller_access_token;
-
-  const userName = cookies.userName || "User";
-  const sellerName = cookies.brandName || "Seller";
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -73,7 +68,7 @@ function Navbar() {
           </span>
         </a>
         <div className="flex flex-row gap-4 md:gap-8 text-2xl md:text-3xl">
-          {/* Show User Section only if Seller is NOT logged in */}
+          {/* Show User section only if not logged in as seller */}
           {!isSellerLoggedIn && (
             <div
               ref={userDropdownRef}
@@ -90,21 +85,35 @@ function Navbar() {
             >
               <FaUserCircle />
               <span className="text-sm font-medium hidden md:block">
-                {userName}
+                {isUserLoggedIn ? `Welcome, ${userName}` : "User"}
               </span>
-              {isUserLoggedIn && showUserDropdown && (
-                <div className="absolute top-8 right-0 z-10 font-medium bg-white rounded-lg shadow-md pl-1 md:pl-4 pr-2 md:pr-8 py-0 md:py-2">
-                  <ul className="py-1 md:py-2 flex flex-col text-sm gap-2 text-gray-700">
+              {isUserLoggedIn && (
+                <div
+                  className={`absolute ${
+                    showUserDropdown ? "block" : "hidden"
+                  } top-8 right-0 z-10 font-medium bg-white rounded-lg shadow-md pl-1 md:pl-4 pr-2 md:pr-8 py-0 md:py-2`}
+                >
+                  <ul className="py-1 md:py-2 flex flex-col text-sm gap-2 text-gray-700 ">
                     <li
                       onClick={() => {
+                        navigate("/customerorders");
+                      }}
+                    >
+                      <a className="block px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 whitespace-nowrap">
+                        Orders
+                      </a>
+                    </li>
+                    <li
+                      onClick={() => {
+                        console.log("User log out clicked");
                         setCookie("user_access_token", "", { expires: new Date(0) });
                         setCookie("userName", "", { expires: new Date(0) });
                         notify("User Logged Out", "info");
                         navigate("/");
                       }}
                     >
-                      <a className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 whitespace-nowrap">
-                        Logout
+                      <a className="block text-red-500   rounded  md:hover:bg-transparent md:border-0 md:hover:text-red-700 md:p-0 whitespace-nowrap">
+                        Log Out
                       </a>
                     </li>
                   </ul>
@@ -113,7 +122,7 @@ function Navbar() {
             </div>
           )}
 
-          {/* Show Seller Section only if User is NOT logged in */}
+          {/* Show Seller section only if not logged in as user */}
           {!isUserLoggedIn && (
             <div
               ref={sellerDropdownRef}
@@ -130,27 +139,35 @@ function Navbar() {
             >
               <SiSellfy />
               <span className="text-sm font-medium hidden md:block">
-                {sellerName}
+                {isSellerLoggedIn ? `${cookies.brandName || "Seller"}` : "Seller"}
               </span>
-              {isSellerLoggedIn && showSellerDropdown && (
-                <div className="absolute top-8 right-0 z-10 font-medium bg-white rounded-lg shadow-md pl-1 md:pl-4 pr-2 md:pr-8 py-0 md:py-2">
-                  <ul className="py-2 flex flex-col text-sm gap-2 text-gray-700">
-                    <li onClick={() => navigate("/sellerdashboard")}>
+              {isSellerLoggedIn && (
+                <div
+                  className={`absolute ${
+                    showSellerDropdown ? "block" : "hidden"
+                  } top-8 right-0 z-10 font-medium bg-white rounded-lg shadow-md pl-1 md:pl-4 pr-2 md:pr-8 py-0 md:py-2`}
+                >
+                  <ul className="py-2 flex flex-col text-sm gap-2 text-gray-700 ">
+                    <li
+                      onClick={() => {
+                        navigate("/sellerdashboard");
+                      }}
+                    >
                       <a className="block px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-green-700 md:p-0 whitespace-nowrap">
-                        Dashboard
+                        Seller Dashboard
                       </a>
                     </li>
                     <li
                       onClick={() => {
+                        console.log("Seller log out clicked");
                         setCookie("seller_access_token", "", { expires: new Date(0) });
-                        setCookie("sellerName", "", { expires: new Date(0) });
                         setCookie("brandName", "", { expires: new Date(0) });
-                        navigate("/");
                         notify("Seller Logged Out", "info");
+                        navigate("/");
                       }}
                     >
                       <a className="block px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-green-700 md:p-0 whitespace-nowrap">
-                        Logout
+                        Seller Logout
                       </a>
                     </li>
                   </ul>
@@ -159,7 +176,7 @@ function Navbar() {
             </div>
           )}
 
-          {/* Cart Section */}
+          {/* Cart is always visible */}
           <div
             className="flex flex-row gap-1 justify-center items-center text-red-700 cursor-pointer"
             onClick={() => {

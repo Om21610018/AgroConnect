@@ -15,11 +15,11 @@ const useAI = () => {
         formData.rainfall
       ),
       "GET",
-      null,
+      null, 
       null,
       false
     );
-    // console.log(resp);
+    console.log(resp);
     return resp.data.message;
   };
 

@@ -9,8 +9,9 @@ function CategoryCard(props) {
       <img
         src={src}
         loading="lazy"
-        className={`w-full h-28 md:h-52 ${blur ? "blur" : "blur-none"
-          }`}
+        className={`w-full h-28 md:h-52 ${
+          blur ? "blur" : "blur-none"
+        }`}
       />
       <div className="absolute top-0 right-0 bottom-0 left-0 h-full w-full overflow-hidden bg-fixed bg-[hsla(0,0%,0%,0.3)]">
         <div className="flex h-full items-end justify-start">
