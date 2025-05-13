@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { AiOutlineShoppingCart } from "react-icons/ai";
 import { FaUserCircle } from "react-icons/fa";
 import { SiSellfy } from "react-icons/si";
@@ -89,9 +89,8 @@ function Navbar() {
               </span>
               {isUserLoggedIn && (
                 <div
-                  className={`absolute ${
-                    showUserDropdown ? "block" : "hidden"
-                  } top-8 right-0 z-10 font-medium bg-white rounded-lg shadow-md pl-1 md:pl-4 pr-2 md:pr-8 py-0 md:py-2`}
+                  className={`absolute ${showUserDropdown ? "block" : "hidden"
+                    } top-8 right-0 z-10 font-medium bg-white rounded-lg shadow-md pl-1 md:pl-4 pr-2 md:pr-8 py-0 md:py-2`}
                 >
                   <ul className="py-1 md:py-2 flex flex-col text-sm gap-2 text-gray-700 ">
                     <li
@@ -143,9 +142,8 @@ function Navbar() {
               </span>
               {isSellerLoggedIn && (
                 <div
-                  className={`absolute ${
-                    showSellerDropdown ? "block" : "hidden"
-                  } top-8 right-0 z-10 font-medium bg-white rounded-lg shadow-md pl-1 md:pl-4 pr-2 md:pr-8 py-0 md:py-2`}
+                  className={`absolute ${showSellerDropdown ? "block" : "hidden"
+                    } top-8 right-0 z-10 font-medium bg-white rounded-lg shadow-md pl-1 md:pl-4 pr-2 md:pr-8 py-0 md:py-2`}
                 >
                   <ul className="py-2 flex flex-col text-sm gap-2 text-gray-700 ">
                     <li
@@ -187,6 +185,11 @@ function Navbar() {
             <span className="text-sm font-medium hidden md:block">Cart</span>
           </div>
           {openCart && <Cart setOpenCart={setOpenCart} />}
+          <div className="flex flex-row gap-1 justify-center items-center text-blue-700 cursor-pointer">
+            <Link to="/chatroom" className="text-sm font-medium hidden md:block">
+              Chat Room
+            </Link>
+          </div>
         </div>
       </div>
     </nav>

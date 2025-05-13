@@ -16,6 +16,7 @@ import Footer from "./components/footer/Footer";
 import Home from "./pages/home";
 import Verify from "./pages/verify";
 import CustomerOrder from "./pages/orders/CustomerOrder";
+import ChatRoom from "./components/chat/ChatRoom";
 
 function App() {
   return (
@@ -24,35 +25,36 @@ function App() {
         <ScrollToTop />
         <Navbar />
         {/* <div className="min-h-[calc(100vh-120px)] md:min-h-[calc(100vh-50px)]"> */}
-          <Routes>
-            <Route exact path="/" element={<Home />} />
-            <Route exact path="/account/:type" element={<LoginAndSignup />} />
-            <Route exact path="/:type/verify/:token" element={<Verify />} />
-            <Route
-              exact
-              path="/sellerdashboard"
-              element={<SellerDashboard />}
-            />
-            <Route
-              exact
-              path="/map/:latitude/:longitude"
-              element={<ShowMap />}
-            />
-            <Route
-              exact
-              path="/sellerdashboard/product/:operation"
-              element={<SellerProductOperation />}
-            />
-            <Route exact path="/category/:type" element={<Product />} />
-            <Route
-              exact
-              path="/category/:type/details/:productId"
-              element={<ProductDashboard />}
-            />
-            <Route exact path="/orders" element={<Order />} />
-            <Route exact path="/customerorders" element={<CustomerOrder />} />
-            <Route exact path="/map" element={<LeafletMap />} />
-          </Routes>
+        <Routes>
+          <Route exact path="/" element={<Home />} />
+          <Route exact path="/account/:type" element={<LoginAndSignup />} />
+          <Route exact path="/:type/verify/:token" element={<Verify />} />
+          <Route
+            exact
+            path="/sellerdashboard"
+            element={<SellerDashboard />}
+          />
+          <Route
+            exact
+            path="/map/:latitude/:longitude"
+            element={<ShowMap />}
+          />
+          <Route
+            exact
+            path="/sellerdashboard/product/:operation"
+            element={<SellerProductOperation />}
+          />
+          <Route exact path="/category/:type" element={<Product />} />
+          <Route
+            exact
+            path="/category/:type/details/:productId"
+            element={<ProductDashboard />}
+          />
+          <Route exact path="/orders" element={<Order />} />
+          <Route exact path="/customerorders" element={<CustomerOrder />} />
+          <Route exact path="/map" element={<LeafletMap />} />
+          <Route exact path="/chatroom" element={<ChatRoom />} />
+        </Routes>
         {/* </div> */}
       </Router>
       <Footer />

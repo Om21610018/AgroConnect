@@ -13,18 +13,12 @@ const FormData = require("form-data"); // Correct import
 const PORT = 8000;
 const app = express();
 
-// app.use(
-//   cors({
-//     origin: [
-//       "https://localhost:5173",
-//       "https://crop-connect-lime.vercel.app",
-//       "https://crop-connect-git-dev-deepaksgithubs-projects.vercel.app",
-//     ],
-//     credentials: false,
-//   })
-// );
+const corsOptions = {
+  origin: ["https://localhost:5173"], // Add your frontend URL here
+  credentials: true, // Allow credentials
+};
 
-app.use(cors());
+app.use(cors(corsOptions));
 const { setupWebSocket } = require("./services/setupWebSocket");
 
 const product = require("./routes/product");
@@ -37,16 +31,17 @@ const auth = require("./routes/auth");
 const chatbot = require("./routes/chatbot.js");
 const payment = require("./routes/payment.js");
 const negotiation = require("./routes/negotiation.js");
-
-// app.use(cors({
-//   origin: "*",
-//   credentials: true
-// }));
+const contacts = require("./routes/contacts");
 
 app.use(express.json());
 
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  cors: {
+    origin: ["https://localhost:5173"], // Add your frontend URL here
+    credentials: true, // Allow credentials
+  },
+});
 
 setupWebSocket(io);
 
@@ -66,6 +61,7 @@ app.use("/ai", ai);
 app.use("/chatbot", chatbot);
 app.use("/payment", payment);
 app.use("/negotiation", negotiation);
+app.use("/api/contacts", contacts);
 
 server.listen(PORT, () => {
   console.log(`Server is running on PORT: ${PORT}`);
