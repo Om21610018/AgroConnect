@@ -32,6 +32,7 @@ const chatbot = require("./routes/chatbot.js");
 const payment = require("./routes/payment.js");
 const negotiation = require("./routes/negotiation.js");
 const contacts = require("./routes/contacts");
+const chatRoutes = require("./routes/chat");
 
 app.use(express.json());
 
@@ -62,6 +63,7 @@ app.use("/chatbot", chatbot);
 app.use("/payment", payment);
 app.use("/negotiation", negotiation);
 app.use("/api/contacts", contacts);
+app.use("/api/chat", chatRoutes);
 
 server.listen(PORT, () => {
   console.log(`Server is running on PORT: ${PORT}`);

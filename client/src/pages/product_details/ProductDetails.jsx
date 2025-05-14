@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { PiSmileySadLight } from "react-icons/pi";
 import { IoBagRemoveOutline } from "react-icons/io5";
-import { FaHandshake } from "react-icons/fa";
+import { FaHandshake, FaComment } from "react-icons/fa";
 import { addToCart, removeFromCart } from "../../redux/actions";
 import Heading from "../../components/heading/Heading";
 import useProducts from "../../hooks/products/useProducts";
@@ -18,6 +18,7 @@ import "slick-carousel/slick/slick-theme.css";
 import Slider from "react-slick";
 import { useCookies } from "react-cookie";
 import axios from "axios";
+import ChatModal from "../../components/chat/ChatModal";
 
 function ProductDetails() {
   const dispatch = useDispatch();
@@ -38,6 +39,7 @@ function ProductDetails() {
 
   // New state for user's latest negotiation
   const [latestNegotiation, setLatestNegotiation] = useState(null);
+  const [showChatModal, setShowChatModal] = useState(false); // State to control chat modal visibility
 
   useStockUpdateSocket(setProductDashboardData);
 
@@ -238,6 +240,14 @@ function ProductDetails() {
     }
   };
 
+  const handleOpenChat = () => {
+    setShowChatModal(true);
+  };
+
+  const handleCloseChat = () => {
+    setShowChatModal(false);
+  };
+
   // Negotiation status UI
   const renderNegotiationStatus = () => {
     if (!latestNegotiation) return null;
@@ -356,13 +366,13 @@ function ProductDetails() {
             />
           )}
 
-          <p className="leading-relaxed text-sm md:text-base">
+          <div className="leading-relaxed text-sm md:text-base">
             {isLoading ? (
               <TextSkeleton noOfRows={12} />
             ) : (
               productDashboardData?.description
             )}
-          </p>
+          </div>
 
           <div className="relative overflow-x-auto my-6">
             <table className="w-full text-base text-left text-gray-500">
@@ -428,57 +438,40 @@ function ProductDetails() {
 
           {/* Buttons container */}
           <div className="flex flex-col md:flex-row gap-3 mt-4">
-            {productDashboardData?.minimumOrderQuantity <=
-              productDashboardData?.quantity ? (
-              <button
-                className={`flex mb-2 md:mb-0 text-white ${isProductInCart
-                    ? "bg-amber-500 hover:bg-amber-600"
-                    : " bg-[#e11d48] hover:bg-[#e5345a]"
-                  } border-0 py-3 px-6 focus:outline-none rounded flex-1`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (isProductInCart) {
-                    removeProductFromCart();
-                  } else {
-                    addProductToCart();
-                  }
-                }}
-              >
-                {isProductInCart ? (
-                  <span className="flex items-center text-lg h-full w-full justify-center">
-                    <IoBagRemoveOutline className="mr-2 text-2xl" />
-                    Remove From Cart
-                  </span>
-                ) : (
-                  <span className="flex items-center text-lg h-full w-full justify-center">
-                    <i className="fa-solid fa-bag-shopping text-xl mr-2"></i>
-                    Add To Cart
-                  </span>
-                )}
-              </button>
-            ) : (
-              <button className="flex mb-2 md:mb-0 text-white bg-orange-600 border-0 py-3 px-6 focus:outline-none rounded flex-1">
-                {" "}
-                {isLoading ? (
-                  <span className="flex items-center text-lg h-full w-full justify-center">
-                    <CiNoWaitingSign className=" text-3xl mr-2" />
-                    Please Wait
-                  </span>
-                ) : (
-                  <span className="flex items-center text-lg h-full w-full justify-center">
-                    <PiSmileySadLight className=" text-3xl mr-2" />
-                    Out of Stock
-                  </span>
-                )}
-              </button>
-            )}
+            {/* Cart Button */}
+            <button
+              className={`flex mb-2 md:mb-0 text-white ${isProductInCart
+                ? "bg-amber-500 hover:bg-amber-600"
+                : "bg-[#e11d48] hover:bg-[#e5345a]"
+                } border-0 py-3 px-6 focus:outline-none rounded flex-1`}
+              onClick={(e) => {
+                e.preventDefault();
+                if (isProductInCart) {
+                  removeProductFromCart();
+                } else {
+                  addProductToCart();
+                }
+              }}
+            >
+              {isProductInCart ? (
+                <span className="flex items-center text-lg h-full w-full justify-center">
+                  <IoBagRemoveOutline className="mr-2 text-2xl" />
+                  Remove From Cart
+                </span>
+              ) : (
+                <span className="flex items-center text-lg h-full w-full justify-center">
+                  <i className="fa-solid fa-bag-shopping text-xl mr-2"></i>
+                  Add To Cart
+                </span>
+              )}
+            </button>
 
             {/* Negotiate Price Button */}
             {!isLoading &&
               !isMainDataLoading &&
               productDashboardData?.quantity > 0 && (
                 <button
-                  className="flex mb-2 md:mb-0 text-white bg-blue-600 hover:bg-blue-700 border-0 py-3 px-6 focus:outline-none rounded flex-1"
+                  className="flex mb-2 md:mb-0 items-center justify-center text-white bg-yellow-500 hover:bg-yellow-600 border-0 py-3 px-6 rounded flex-1 text-lg transition-colors"
                   onClick={openNegotiateModal}
                 >
                   <span className="flex items-center text-lg h-full w-full justify-center">
@@ -487,7 +480,26 @@ function ProductDetails() {
                   </span>
                 </button>
               )}
+
+            {/* Chat Button */}
+            <button
+              onClick={handleOpenChat}
+              className="flex mb-2 md:mb-0 items-center justify-center text-white bg-blue-600 hover:bg-blue-700 border-0 py-3 px-6 rounded flex-1 text-lg transition-colors"
+            >
+              <FaComment className="text-xl mr-2" />
+              Chat with Seller
+            </button>
           </div>
+
+
+          {showChatModal && (
+            <ChatModal
+              isOpen={showChatModal}
+              onClose={handleCloseChat}
+              sellerId={productDashboardData.sellerId}
+              productId={productId}
+            />
+          )}
         </div>
       </div>
 

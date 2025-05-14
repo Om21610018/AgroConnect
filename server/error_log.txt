@@ -1,175 +1,68 @@
-C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\express\lib\router\index.js:469
-      throw new TypeError('Router.use() requires a middleware function but got a ' + gettype(fn))
-      ^
+C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\routes\chat.js:13
+router.get("/product/:productId", verifyAccessToken, getProductDetails);
+                                                     ^
 
-TypeError: Router.use() requires a middleware function but got a Object
-    at Function.use (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\express\lib\router\index.js:469:13)
-    at Function.<anonymous> (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\express\lib\application.js:227:21)
-    at Array.forEach (<anonymous>)
-    at Function.use (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\express\lib\application.js:224:7)
-    at Object.<anonymous> (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\index.js:70:5)
+ReferenceError: getProductDetails is not defined
+    at Object.<anonymous> (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\routes\chat.js:13:54)
     at Module._compile (node:internal/modules/cjs/loader:1376:14)
     at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)
     at Module.load (node:internal/modules/cjs/loader:1207:32)
     at Module._load (node:internal/modules/cjs/loader:1023:12)
-    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:135:12)
+    at Module.require (node:internal/modules/cjs/loader:1235:19)
+    at require (node:internal/modules/helpers:176:18)
+    at Object.<anonymous> (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\index.js:35:20)
+    at Module._compile (node:internal/modules/cjs/loader:1376:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)
 
 Node.js v20.11.0
-node:events:496
-      throw er; // Unhandled 'error' event
-      ^
+C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\express\lib\router\route.js:216
+        throw new Error(msg);
+        ^
 
-MongoServerSelectionError: getaddrinfo ENOTFOUND cluster0-shard-00-00.79zdv.mongodb.net
-    at Timeout._onTimeout (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\mongoose\node_modules\mongodb\lib\sdam\topology.js:278:38)
-    at listOnTimeout (node:internal/timers:573:17)
-    at process.processTimers (node:internal/timers:514:7)
-Emitted 'error' event on ChangeStream instance at:
-    at ChangeStream.<anonymous> (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\mongoose\lib\cursor\ChangeStream.js:83:14)
-    at ChangeStream.emit (node:events:518:28)
-    at ChangeStream._closeEmitterModeWithError (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\mongoose\node_modules\mongodb\lib\change_stream.js:276:14)
-    at ChangeStream._processErrorStreamMode (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\mongoose\node_modules\mongodb\lib\change_stream.js:341:18)
-    at ReadableCursorStream.<anonymous> (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\mongoose\node_modules\mongodb\lib\change_stream.js:293:42)
-    at ReadableCursorStream.emit (node:events:518:28)
-    at emitErrorNT (node:internal/streams/destroy:169:8)
-    at emitErrorCloseNT (node:internal/streams/destroy:128:3)
-    at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
-  reason: TopologyDescription {
-    type: 'ReplicaSetNoPrimary',
-    servers: Map(3) {
-      'cluster0-shard-00-00.79zdv.mongodb.net:27017' => ServerDescription {
-        address: 'cluster0-shard-00-00.79zdv.mongodb.net:27017',
-        type: 'Unknown',
-        hosts: [],
-        passives: [],
-        arbiters: [],
-        tags: {},
-        minWireVersion: 0,
-        maxWireVersion: 0,
-        roundTripTime: -1,
-        lastUpdateTime: 381612173,
-        lastWriteDate: 0,
-        error: MongoNetworkError: getaddrinfo ENOTFOUND cluster0-shard-00-00.79zdv.mongodb.net
-            at connectionFailureError (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\mongoose\node_modules\mongodb\lib\cmap\connect.js:367:20)
-            at TLSSocket.<anonymous> (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\mongoose\node_modules\mongodb\lib\cmap\connect.js:290:22)
-            at Object.onceWrapper (node:events:633:26)
-            at TLSSocket.emit (node:events:518:28)
-            at emitErrorNT (node:internal/streams/destroy:169:8)
-            at emitErrorCloseNT (node:internal/streams/destroy:128:3)
-            at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
-          cause: Error: getaddrinfo ENOTFOUND cluster0-shard-00-00.79zdv.mongodb.net
-              at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:118:26) {
-            errno: -3008,
-            code: 'ENOTFOUND',
-            syscall: 'getaddrinfo',
-            hostname: 'cluster0-shard-00-00.79zdv.mongodb.net'
-          },
-          [Symbol(errorLabels)]: Set(1) { 'ResetPool' }
-        },
-        topologyVersion: null,
-        setName: null,
-        setVersion: null,
-        electionId: null,
-        logicalSessionTimeoutMinutes: null,
-        primary: null,
-        me: null,
-        '$clusterTime': null
-      },
-      'cluster0-shard-00-01.79zdv.mongodb.net:27017' => ServerDescription {
-        address: 'cluster0-shard-00-01.79zdv.mongodb.net:27017',
-        type: 'Unknown',
-        hosts: [],
-        passives: [],
-        arbiters: [],
-        tags: {},
-        minWireVersion: 0,
-        maxWireVersion: 0,
-        roundTripTime: -1,
-        lastUpdateTime: 381612172,
-        lastWriteDate: 0,
-        error: MongoNetworkError: getaddrinfo ENOTFOUND cluster0-shard-00-01.79zdv.mongodb.net
-            at connectionFailureError (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\mongoose\node_modules\mongodb\lib\cmap\connect.js:367:20)
-            at TLSSocket.<anonymous> (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\mongoose\node_modules\mongodb\lib\cmap\connect.js:290:22)
-            at Object.onceWrapper (node:events:633:26)
-            at TLSSocket.emit (node:events:518:28)
-            at emitErrorNT (node:internal/streams/destroy:169:8)
-            at emitErrorCloseNT (node:internal/streams/destroy:128:3)
-            at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
-          cause: Error: getaddrinfo ENOTFOUND cluster0-shard-00-01.79zdv.mongodb.net
-              at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:118:26) {
-            errno: -3008,
-            code: 'ENOTFOUND',
-            syscall: 'getaddrinfo',
-            hostname: 'cluster0-shard-00-01.79zdv.mongodb.net'
-          },
-          [Symbol(errorLabels)]: Set(1) { 'ResetPool' }
-        },
-        topologyVersion: null,
-        setName: null,
-        setVersion: null,
-        electionId: null,
-        logicalSessionTimeoutMinutes: null,
-        primary: null,
-        me: null,
-        '$clusterTime': null
-      },
-      'cluster0-shard-00-02.79zdv.mongodb.net:27017' => ServerDescription {
-        address: 'cluster0-shard-00-02.79zdv.mongodb.net:27017',
-        type: 'Unknown',
-        hosts: [],
-        passives: [],
-        arbiters: [],
-        tags: {},
-        minWireVersion: 0,
-        maxWireVersion: 0,
-        roundTripTime: -1,
-        lastUpdateTime: 381612172,
-        lastWriteDate: 0,
-        error: MongoNetworkError: getaddrinfo ENOTFOUND cluster0-shard-00-02.79zdv.mongodb.net
-            at connectionFailureError (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\mongoose\node_modules\mongodb\lib\cmap\connect.js:367:20)
-            at TLSSocket.<anonymous> (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\mongoose\node_modules\mongodb\lib\cmap\connect.js:290:22)
-            at Object.onceWrapper (node:events:633:26)
-            at TLSSocket.emit (node:events:518:28)
-            at emitErrorNT (node:internal/streams/destroy:169:8)
-            at emitErrorCloseNT (node:internal/streams/destroy:128:3)
-            at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
-          cause: Error: getaddrinfo ENOTFOUND cluster0-shard-00-02.79zdv.mongodb.net
-              at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:118:26) {
-            errno: -3008,
-            code: 'ENOTFOUND',
-            syscall: 'getaddrinfo',
-            hostname: 'cluster0-shard-00-02.79zdv.mongodb.net'
-          },
-          [Symbol(errorLabels)]: Set(1) { 'ResetPool' }
-        },
-        topologyVersion: null,
-        setName: null,
-        setVersion: null,
-        electionId: null,
-        logicalSessionTimeoutMinutes: null,
-        primary: null,
-        me: null,
-        '$clusterTime': null
-      }
-    },
-    stale: false,
-    compatible: true,
-    heartbeatFrequencyMS: 10000,
-    localThresholdMS: 15,
-    setName: 'atlas-9bi1av-shard-0',
-    maxElectionId: ObjectId {
-      [Symbol(id)]: Buffer(12) [Uint8Array] [
-        127, 255, 255, 255, 0,
-          0,   0,   0,   0, 0,
-          0, 243
-      ]
-    },
-    maxSetVersion: 286,
-    commonWireVersion: 0,
-    logicalSessionTimeoutMinutes: null
-  },
-  code: undefined,
-  [Symbol(errorLabels)]: Set(0) {}
-}
+Error: Route.post() requires a callback function but got a [object Undefined]
+    at Route.<computed> [as post] (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\express\lib\router\route.js:216:15)
+    at proto.<computed> [as post] (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\express\lib\router\index.js:521:19)
+    at Object.<anonymous> (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\routes\chat.js:13:8)
+    at Module._compile (node:internal/modules/cjs/loader:1376:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)
+    at Module.load (node:internal/modules/cjs/loader:1207:32)
+    at Module._load (node:internal/modules/cjs/loader:1023:12)
+    at Module.require (node:internal/modules/cjs/loader:1235:19)
+    at require (node:internal/modules/helpers:176:18)
+    at Object.<anonymous> (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\index.js:35:20)
 
 Node.js v20.11.0
-^C
+C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\express\lib\router\route.js:216
+        throw new Error(msg);
+        ^
+
+Error: Route.post() requires a callback function but got a [object Undefined]
+    at Route.<computed> [as post] (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\express\lib\router\route.js:216:15)
+    at proto.<computed> [as post] (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\express\lib\router\index.js:521:19)
+    at Object.<anonymous> (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\routes\chat.js:13:8)
+    at Module._compile (node:internal/modules/cjs/loader:1376:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)
+    at Module.load (node:internal/modules/cjs/loader:1207:32)
+    at Module._load (node:internal/modules/cjs/loader:1023:12)
+    at Module.require (node:internal/modules/cjs/loader:1235:19)
+    at require (node:internal/modules/helpers:176:18)
+    at Object.<anonymous> (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\index.js:35:20)
+
+Node.js v20.11.0
+C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\controllers\chatController.js:69
+            .populate({
+                       
+
+SyntaxError: Unexpected end of input
+    at internalCompileFunction (node:internal/vm:77:18)
+    at wrapSafe (node:internal/modules/cjs/loader:1288:20)
+    at Module._compile (node:internal/modules/cjs/loader:1340:27)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)
+    at Module.load (node:internal/modules/cjs/loader:1207:32)
+    at Module._load (node:internal/modules/cjs/loader:1023:12)
+    at Module.require (node:internal/modules/cjs/loader:1235:19)
+    at require (node:internal/modules/helpers:176:18)
+    at Object.<anonymous> (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\routes\chat.js:3:63)
+    at Module._compile (node:internal/modules/cjs/loader:1376:14)
+
+Node.js v20.11.0

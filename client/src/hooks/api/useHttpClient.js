@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { notify } from "../../utils/helper/notification";
 import { notifyType } from "../../utils/helper/notificationType";
@@ -13,50 +13,59 @@ const useHttpClient = () => {
     "seller_access_token",
   ]);
 
-  const sendRequest = async (
-    url,
-    method = "GET",
-    body = null,
-    headers = {},
-    showToast = true,
-    withCredentials = false
-  ) => {
-    setIsLoading(true);
-    try {
-      const response = await axios({
-        url,
-        method,
-        data: body,
-        headers,
-        withCredentials,
-      });
+  const sendRequest = useCallback(
+    async (
+      url,
+      method = "GET",
+      body = null,
+      headers = {},
+      showToast = true,
+      withCredentials = false
+    ) => {
+      setIsLoading(true);
+      try {
+        // Add Authorization header if token is available
+        const token = cookies.seller_access_token || cookies.user_access_token;
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
 
-      if (response.data.cookies) {
-        Object.keys(response.data.cookies).forEach((cookie) => {
-          setCookie(cookie, response.data.cookies[cookie]);
+        const response = await axios({
+          url,
+          method,
+          data: body,
+          headers,
+          withCredentials,
         });
-      }
 
-      console.log("URL RESPONSE", url, " ", response);
-      if (showToast) notify(response.data.message, "success");
-      return response;
-    } catch (error) {
-      console.log(error);
+        if (response.data.cookies) {
+          Object.keys(response.data.cookies).forEach((cookie) => {
+            setCookie(cookie, response.data.cookies[cookie]);
+          });
+        }
 
-      if (error.response.status === 504) {
-        notify(
-          "Gateway timeout occurred. Please try to reload the page.",
-          "error"
-        );
-        return;
+        console.log("URL RESPONSE", url, " ", response);
+        if (showToast) notify(response.data.message, "success");
+        return response;
+      } catch (error) {
+        console.log(error);
+
+        if (error.response.status === 504) {
+          notify(
+            "Gateway timeout occurred. Please try to reload the page.",
+            "error"
+          );
+          return;
+        }
+        if (showToast)
+          notify(error.response.data.message, notifyType(error.response.status));
+        throw error;
+      } finally {
+        setIsLoading(false);
       }
-      if (showToast)
-        notify(error.response.data.message, notifyType(error.response.status));
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+    [cookies, setCookie]
+  );
 
   const sendAuthorizedRequest = async (
     requestType = "user",
@@ -82,11 +91,10 @@ const useHttpClient = () => {
       method,
       body,
       {
-        authorization: `Bearer ${
-          requestType === "user"
-            ? cookies.user_access_token
-            : cookies.seller_access_token
-        }`,
+        authorization: `Bearer ${requestType === "user"
+          ? cookies.user_access_token
+          : cookies.seller_access_token
+          }`,
         ...headers,
       },
       showToast,

@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
-import { io } from "socket.io-client";
+import socket from "../../utils/socket";
 import useHttpClient from "../../hooks/api/useHttpClient";
+import useChatSocket from "../../hooks/useChatSocket";
+import ActiveChatList from "./ActiveChatList";
+import { fetchProductDetails } from "../../utils/chatUtils";
 
 const ChatRoom = () => {
-    const [socket, setSocket] = useState(null);
-    const [contacts, setContacts] = useState([]);
-    const [selectedContact, setSelectedContact] = useState(null);
+    const [selectedChat, setSelectedChat] = useState(null);
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState([]);
     const { sendRequest } = useHttpClient();
-    const [authInfo, setAuthInfo] = useState({ userType: null, selfId: null });
-    const lastFetchedType = useRef(null);
     const currentRoomId = useRef(null);
+    const [activeChats, setActiveChats] = useState([]); // List of active chats for sellers
+    const messageContainerRef = useRef(null);
+    const [searchQuery, setSearchQuery] = useState("");
 
     const getCookieValue = (name) => {
         const value = document.cookie
@@ -20,253 +22,255 @@ const ChatRoom = () => {
         return value ? decodeURIComponent(value.split("=")[1]) : null;
     };
 
-    const getAuthFromCookies = () => {
-        const userToken = getCookieValue("user_access_token");
-        const sellerToken = getCookieValue("seller_access_token");
-
-        if (userToken) {
-            return { userType: "user", selfId: getCookieValue("userId") || null };
-        } else if (sellerToken) {
-            return { userType: "seller", selfId: getCookieValue("userId") || null };
-        }
-        return { userType: null, selfId: null };
+    const fetchProductIdsFromActiveChats = (activeChats) => {
+        return activeChats.map((chat) => {
+            const productId = chat.roomId.split('-')[1]; // Extract productId from roomId
+            return productId;
+        });
     };
 
     useEffect(() => {
-        const auth = getAuthFromCookies();
-        setAuthInfo(auth);
-    }, []);
-
-    useEffect(() => {
-        const newSocket = io("http://localhost:8000");
-        setSocket(newSocket);
-        return () => {
-            newSocket.disconnect();
-        };
-    }, []);
-
-    useEffect(() => {
-        const { userType, selfId } = authInfo; // Ensure selfId is destructured from authInfo
-        console.log("Auth Info:", authInfo); // Debugging log to verify authInfo
-
-        if (!socket || !selfId) return;
-
-        const handleReceiveMessage = (chatMessage) => {
-            console.log("Received message:", chatMessage); // Debugging log to verify received message
-            if (chatMessage.sender === authInfo.selfId) return; // skip self messages
-            setMessages((prev) => [...prev, chatMessage]);
-        };
-
-        socket.on("receiveChatMessage", handleReceiveMessage);
-
-        return () => {
-            socket.off("receiveChatMessage", handleReceiveMessage);
-        };
-    }, [socket, authInfo]);
-
-    useEffect(() => {
-        const fetchContacts = async () => {
-            const { userType } = authInfo;
-            if (!userType || lastFetchedType.current === userType) return;
+        const fetchActiveChats = async () => {
             try {
-                const endpoint = userType === "user" ? "/api/contacts/sellers" : "/api/contacts/users";
-                const response = await sendRequest(endpoint, "GET", null, {}, false, true);
-                const contactsData = response.data;
-                setContacts(Array.isArray(contactsData) ? contactsData : []);
-                lastFetchedType.current = userType;
+                const response = await sendRequest(`/api/chat/active/${getCookieValue("userId")}`, "GET", null, {}, false, true);
+                const productIds = fetchProductIdsFromActiveChats(response.data || []);
+                const productDetails = await fetchProductDetails(sendRequest, productIds);
+
+                // Map product details to active chats
+                const updatedChats = (response.data || []).map((chat) => {
+                    const productId = chat.roomId.split('-')[1];
+                    const productDetail = productDetails.find((product) => product._id === productId);
+                    return { ...chat, productDetail };
+                });
+
+                // Sort chats by most recent activity
+                const sortedChats = (updatedChats || []).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+                setActiveChats(updatedChats);
             } catch (error) {
-                console.error("Failed to fetch contacts:", error);
-                setContacts([]);
+                console.error("Failed to fetch active chats:", error);
             }
         };
-        fetchContacts();
-    }, [authInfo]);
+        fetchActiveChats();
 
-    const getRoomId = (contact) => {
-        const { userType, selfId } = authInfo;
-        if (!contact?.id || !selfId) return null;
-        const userId = userType === "user" ? selfId : contact.id;
-        const sellerId = userType === "seller" ? selfId : contact.id;
-        return `chat-${[userId, sellerId].sort().join("-")}`;
-    };
+    }, [socket, sendRequest]);
 
-    const joinRoom = (contact) => {
-        const roomId = getRoomId(contact);
-        if (socket && roomId) {
-            setSelectedContact(contact);
-            currentRoomId.current = roomId;
-            socket.emit("joinChatRoom", { roomId, userType: authInfo.userType });
+    useEffect(() => {
+        if (messageContainerRef.current) {
+            messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+        }
+    }, [messages]);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleNewMessageNotification = ({ roomId, message, senderType }) => {
+            console.log("New message notification received for room:", roomId, "message:", message);
+
+            // Only set hasNewMessage to true if the sender is not the seller
+            if (senderType !== "seller") {
+                setActiveChats((prev) => {
+                    return prev.map((chat) => {
+                        if (chat.roomId === roomId) {
+                            return { ...chat, hasNewMessage: true };
+                        }
+                        return chat;
+                    });
+                });
+            }
+        };
+
+        socket.on("newMessageNotification", handleNewMessageNotification);
+
+        return () => {
+            socket.off("newMessageNotification", handleNewMessageNotification);
+        };
+    }, [socket]);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleReceiveChatMessage = (chatMessage) => {
+            console.log("Received chat message:", chatMessage);
+            if (chatMessage.senderType === "seller") return; // Ignore messages from the seller
+            setMessages((prev) => [...prev, chatMessage]);
+            if (messageContainerRef.current) {
+                messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+            }
+        };
+
+        socket.on("receiveChatMessage", handleReceiveChatMessage);
+
+        return () => {
+            socket.off("receiveChatMessage", handleReceiveChatMessage);
+        };
+    }, [socket]);
+
+    const handleSelectChat = async (chat) => {
+        try {
+            if (socket) {
+                socket.emit("leaveChatRoom", { roomId: currentRoomId.current });
+            }
+
+            currentRoomId.current = chat.roomId;
+            setSelectedChat(chat);
+
+            // Reset the hasNewMessage property for the selected chat
+            setActiveChats((prev) =>
+                prev.map((c) =>
+                    c.roomId === chat.roomId ? { ...c, hasNewMessage: false } : c
+                )
+            );
+
+            // Notify the navbar about the change
+            socket.emit("chatOpened", { roomId: chat.roomId });
+
+            // Fetch messages for the selected chat room
+            const response = await sendRequest(`/api/chat/${chat.roomId}/messages`, "GET", null, {}, false, true);
+            setMessages(response.data || []);
+
+            socket.emit("joinChatRoom", { roomId: chat.roomId });
+
+            // Auto-scroll to the bottom of the chat area
+            if (messageContainerRef.current) {
+                messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+            }
+        } catch (error) {
+            console.error("Failed to fetch messages for the selected chat room:", error);
         }
     };
-
-    // leave room when unmounting or when selectedContact changes
-    useEffect(() => {
-        return () => {
-            if (socket && currentRoomId.current) {
-                socket.emit("leaveChatRoom", currentRoomId.current);
-                currentRoomId.current = null;
-            }
-        };
-    }, [socket, selectedContact]);
-
 
     const sendMessage = () => {
-        const { selfId } = authInfo;
-
-        // Guard: Must have a message, selectedContact, and joined room
-        if (!socket || !message || !selectedContact || !currentRoomId.current) return;
-
+        const roomId = currentRoomId.current;
+        if (!socket || !message || !roomId) return;
+        const userId = getCookieValue('userId');
         const timestamp = new Date().toLocaleTimeString();
-        const newMessage = {
-            roomId: currentRoomId.current,
-            sender: selfId,
-            message,
-            timestamp,
-        };
-
-        console.log("Sending message to room:", currentRoomId.current);
-
-        socket.emit("sendChatMessage", newMessage);
+        const participants = [userId, ...(selectedChat?.participants?.map(p => p._id) || [])];
+        const newMessage = { roomId, sender: userId, senderType: "seller", message, timestamp };
+        socket.emit("sendChatMessage", { ...newMessage, participants });
         setMessages((prev) => [...prev, newMessage]);
         setMessage("");
+
+        // Auto-scroll to the bottom of the chat area
+        if (messageContainerRef.current) {
+            messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+        }
     };
 
+    const handleKeyPress = (e) => {
+        if (e.key === "Enter" && message.trim() !== "") {
+            sendMessage();
+        }
+    };
 
-    const filteredMessages = messages.filter((msg) => msg.roomId === currentRoomId.current);
-    // const filteredMessages = messages;
+    useChatSocket(socket, setActiveChats);
+
+    const filteredChats = activeChats.filter((chat) => {
+        const productDetail = chat.productDetail || {};
+        const participantNames = chat.participants.map((p) => p.name).join(", ");
+        const searchFields = [
+            participantNames,
+            productDetail.name,
+            productDetail.category,
+            productDetail.description,
+            productDetail.quantity?.toString(),
+            productDetail.minimumOrderQuantity?.toString(),
+        ];
+        return searchFields.some((field) =>
+            field?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    });
 
     return (
-        <div style={styles.chatRoom}>
-            <div style={styles.sidebar}>
-                <h3>Contacts</h3>
-                <ul style={styles.contactList}>
-                    {contacts.map((contact) => (
-                        <li
-                            key={contact.id}
-                            style={{
-                                ...styles.contactItem,
-                                backgroundColor: selectedContact?.id === contact.id ? "#4c6e6e" : "transparent",
-                                cursor: authInfo.selfId ? "pointer" : "not-allowed",
-                                opacity: authInfo.selfId ? 1 : 0.5,
-                            }}
-                            onClick={() => authInfo.selfId && joinRoom(contact)}
-                        >
-                            {contact.name}
-                        </li>
-                    ))}
-                </ul>
+        <div className="flex h-[95vh] font-sans bg-gray-100">
+            {/* Sidebar */}
+            <div className="w-80 bg-gray-900 text-white p-5 space-y-4 shadow-md">
+                <h3 className="text-xl font-bold">💬 Active Chats</h3>
+                <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search by product details..."
+                    className="w-full p-2 rounded-lg bg-white text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <div className="overflow-y-auto h-[75vh] pr-1">
+                    <ActiveChatList
+                        filteredChats={filteredChats}
+                        handleSelectChat={handleSelectChat}
+                        selectedChat={selectedChat}
+                    />
+                </div>
             </div>
 
-            <div style={styles.chatArea}>
-                <div style={styles.header}>
-                    {selectedContact ? (
-                        <h2>Chat with {selectedContact.name}</h2>
+            {/* Chat Area */}
+            <div className="flex-1 flex flex-col p-6 bg-white border-l border-gray-300">
+                {/* Chat Header */}
+                <div className="mb-4 border-b pb-2">
+                    {selectedChat ? (
+                        <h2 className="text-2xl font-semibold text-gray-800">Chat with <span className="text-blue-600">{selectedChat.participants.map(p => p.name).join(", ")}</span></h2>
                     ) : (
-                        <h2>Select a contact to start chatting</h2>
+                        <h2 className="text-2xl font-semibold text-gray-500">Select a contact to start chatting</h2>
                     )}
                 </div>
 
-                <div style={styles.messages}>
-                    {filteredMessages.map((msg, index) => (
-                        <div key={`${msg.roomId}-${msg.sender}-${msg.timestamp}-${index}`} style={styles.message}>
-                            <strong>{msg.sender}:</strong> {msg.message}{" "}
-                            <em style={{ fontSize: "0.8em", color: "#888" }}>({msg.timestamp})</em>
+                {/* Message Area */}
+                <div
+                    className="flex-1 overflow-y-auto space-y-4 p-4 bg-gray-50 rounded-lg shadow-inner"
+                    ref={messageContainerRef}
+                >
+                    {messages.map((msg, index) => (
+                        <div
+                            key={index}
+                            className={`flex w-full ${msg.senderType === "seller" ? "justify-end" : "justify-start"}`}
+                        >
+                            <div
+                                className={`p-3 rounded-xl max-w-[75%] flex flex-col shadow ${msg.senderType === "seller"
+                                    ? "bg-blue-600 text-white"
+                                    : "bg-emerald-100 text-emerald-900"
+                                    }`}
+                            >
+                                {/* Sender label */}
+                                <div className="text-xs font-semibold opacity-80 mb-1">
+                                    {msg.senderType === "seller" ? "Seller (You)" : "Buyer"}
+                                </div>
+
+                                {/* Message content */}
+                                <div className="text-sm leading-snug break-words">{msg.message}</div>
+
+                                {/* Timestamp */}
+                                <div className={`text-[10px] mt-1 self-end ${msg.senderType === "seller" ? "text-blue-200" : "text-emerald-500"
+                                    }`}>
+                                    {msg.timestamp}
+                                </div>
+                            </div>
                         </div>
                     ))}
                 </div>
 
-                {selectedContact && (
-                    <div style={styles.sendMessageSection}>
+
+                {/* Message Input */}
+                {selectedChat && (
+                    <div className="flex mt-4 items-center space-x-2">
                         <input
                             type="text"
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
-                            placeholder="Type a message"
-                            style={styles.input}
+                            onKeyPress={handleKeyPress}
+                            placeholder="Type your message..."
+                            className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                         />
                         <button
                             onClick={sendMessage}
-                            style={styles.button}
+                            className="px-5 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-medium"
                         >
                             Send
                         </button>
-
                     </div>
                 )}
             </div>
         </div>
-    );
-};
 
-const styles = {
-    chatRoom: {
-        display: "flex",
-        height: "100vh",
-        fontFamily: "Arial, sans-serif",
-        backgroundColor: "#f4f7fa",
-    },
-    sidebar: {
-        width: "250px",
-        backgroundColor: "#2f4f4f",
-        color: "white",
-        padding: "10px",
-        height: "100%",
-        overflowY: "auto",
-    },
-    contactList: {
-        listStyleType: "none",
-        padding: 0,
-    },
-    contactItem: {
-        padding: "12px",
-        borderBottom: "1px solid #444",
-        transition: "background-color 0.3s",
-    },
-    chatArea: {
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        padding: "20px",
-        backgroundColor: "white",
-        borderLeft: "1px solid #ddd",
-    },
-    header: {
-        marginBottom: "10px",
-    },
-    messages: {
-        flex: 1,
-        overflowY: "auto",
-        border: "1px solid #ddd",
-        padding: "10px",
-        borderRadius: "4px",
-        backgroundColor: "#f9f9f9",
-        marginBottom: "10px",
-    },
-    message: {
-        marginBottom: "10px",
-        padding: "8px",
-        backgroundColor: "#eef",
-        borderRadius: "6px",
-        maxWidth: "75%",
-    },
-    sendMessageSection: {
-        display: "flex",
-    },
-    input: {
-        flex: 1,
-        padding: "10px",
-        borderRadius: "4px",
-        border: "1px solid #ccc",
-        marginRight: "10px",
-    },
-    button: {
-        padding: "10px 16px",
-        backgroundColor: "#4CAF50",
-        color: "white",
-        border: "none",
-        borderRadius: "4px",
-        cursor: "pointer",
-    },
+    );
 };
 
 export default ChatRoom;
