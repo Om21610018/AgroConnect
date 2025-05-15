@@ -26,7 +26,7 @@ const useProducts = () => {
       console.log(error);
     }
   };
-  
+
 
   const getProductUserDashboardData = async (productId) => {
     try {
@@ -125,7 +125,7 @@ const useProducts = () => {
       console.log(error);
     }
   };
-  
+
 
   return {
     getProductsByCategory,

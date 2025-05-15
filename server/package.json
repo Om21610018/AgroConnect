@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js 2> error_log.txt"
   },
   "author": "",
   "license": "ISC",
@@ -31,6 +31,7 @@
     "path": "^0.12.7",
     "razorpay": "^2.9.6",
     "socket.io": "^4.7.4",
+    "socket.io-client": "^4.8.1",
     "speech-recognition": "^0.0.1",
     "speech-to-text": "^2.9.1",
     "streamifier": "^0.1.1",

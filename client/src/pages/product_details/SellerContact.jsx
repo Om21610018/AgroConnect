@@ -15,7 +15,7 @@ function SellerContact() {
 
 
   const [feedbackForm, setFeedbackForm] = useState({
-    question: null,
+    question: "", // Initialize with an empty string to avoid null warnings
   });
 
   const submitFeedbackForm = async () => {
