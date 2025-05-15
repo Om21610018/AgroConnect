@@ -22,14 +22,16 @@ const ChatModal = ({
   const { sendRequest } = useHttpClient();
   console.log("Product Details:", productDetails);
 
-  const roomId = `chat-${productId}-${sellerId}`;
+    // Removed duplicate declaration of roomId
 
-  const getCookieValue = (name) => {
-    const value = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith(name + "="));
-    return value ? decodeURIComponent(value.split("=")[1]) : null;
-  };
+    const getCookieValue = (name) => {
+        const value = document.cookie
+            .split("; ")
+            .find((row) => row.startsWith(name + "="));
+        return value ? decodeURIComponent(value.split("=")[1]) : null;
+    };
+
+    const roomId = `chat-${productId}-${sellerId}-${getCookieValue("userId")}`;
 
   useEffect(() => {
     if (isOpen) {

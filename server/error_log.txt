@@ -1,22 +1,68 @@
-node:events:492
-      throw er; // Unhandled 'error' event
-      ^
+C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\routes\chat.js:13
+router.get("/product/:productId", verifyAccessToken, getProductDetails);
+                                                     ^
 
-MongoNetworkError: connection 6 to 159.41.168.15:27017 closed
-    at Connection.onClose (G:\Project\AgroConnect\server\node_modules\mongodb\lib\cmap\connection.js:121:28)
-    at TLSSocket.<anonymous> (G:\Project\AgroConnect\server\node_modules\mongodb\lib\cmap\connection.js:63:46)
-    at TLSSocket.emit (node:events:514:28)
-    at node:net:337:12
-    at TCP.done (node:_tls_wrap:657:7)
-Emitted 'error' event on ChangeStream instance at:
-    at ChangeStream.<anonymous> (G:\Project\AgroConnect\server\node_modules\mongoose\lib\cursor\ChangeStream.js:83:14)
-    at ChangeStream.emit (node:events:514:28)
-    at ChangeStream._closeEmitterModeWithError (G:\Project\AgroConnect\server\node_modules\mongodb\lib\change_stream.js:276:14)
-    at Object.callback (G:\Project\AgroConnect\server\node_modules\mongodb\lib\change_stream.js:336:33)
-    at Timeout._onTimeout (G:\Project\AgroConnect\server\node_modules\mongodb\lib\sdam\topology.js:279:33)
-    at listOnTimeout (node:internal/timers:573:17)
-    at process.processTimers (node:internal/timers:514:7) {
-  [Symbol(errorLabels)]: Set(2) { 'RetryableWriteError', 'ResetPool' }
-}
+ReferenceError: getProductDetails is not defined
+    at Object.<anonymous> (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\routes\chat.js:13:54)
+    at Module._compile (node:internal/modules/cjs/loader:1376:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)
+    at Module.load (node:internal/modules/cjs/loader:1207:32)
+    at Module._load (node:internal/modules/cjs/loader:1023:12)
+    at Module.require (node:internal/modules/cjs/loader:1235:19)
+    at require (node:internal/modules/helpers:176:18)
+    at Object.<anonymous> (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\index.js:35:20)
+    at Module._compile (node:internal/modules/cjs/loader:1376:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)
 
-Node.js v20.9.0
+Node.js v20.11.0
+C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\express\lib\router\route.js:216
+        throw new Error(msg);
+        ^
+
+Error: Route.post() requires a callback function but got a [object Undefined]
+    at Route.<computed> [as post] (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\express\lib\router\route.js:216:15)
+    at proto.<computed> [as post] (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\express\lib\router\index.js:521:19)
+    at Object.<anonymous> (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\routes\chat.js:13:8)
+    at Module._compile (node:internal/modules/cjs/loader:1376:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)
+    at Module.load (node:internal/modules/cjs/loader:1207:32)
+    at Module._load (node:internal/modules/cjs/loader:1023:12)
+    at Module.require (node:internal/modules/cjs/loader:1235:19)
+    at require (node:internal/modules/helpers:176:18)
+    at Object.<anonymous> (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\index.js:35:20)
+
+Node.js v20.11.0
+C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\express\lib\router\route.js:216
+        throw new Error(msg);
+        ^
+
+Error: Route.post() requires a callback function but got a [object Undefined]
+    at Route.<computed> [as post] (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\express\lib\router\route.js:216:15)
+    at proto.<computed> [as post] (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\node_modules\express\lib\router\index.js:521:19)
+    at Object.<anonymous> (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\routes\chat.js:13:8)
+    at Module._compile (node:internal/modules/cjs/loader:1376:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)
+    at Module.load (node:internal/modules/cjs/loader:1207:32)
+    at Module._load (node:internal/modules/cjs/loader:1023:12)
+    at Module.require (node:internal/modules/cjs/loader:1235:19)
+    at require (node:internal/modules/helpers:176:18)
+    at Object.<anonymous> (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\index.js:35:20)
+
+Node.js v20.11.0
+C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\controllers\chatController.js:69
+            .populate({
+                       
+
+SyntaxError: Unexpected end of input
+    at internalCompileFunction (node:internal/vm:77:18)
+    at wrapSafe (node:internal/modules/cjs/loader:1288:20)
+    at Module._compile (node:internal/modules/cjs/loader:1340:27)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)
+    at Module.load (node:internal/modules/cjs/loader:1207:32)
+    at Module._load (node:internal/modules/cjs/loader:1023:12)
+    at Module.require (node:internal/modules/cjs/loader:1235:19)
+    at require (node:internal/modules/helpers:176:18)
+    at Object.<anonymous> (C:\Users\Shamshad Choudhary\Documents\AgroConnect\server\routes\chat.js:3:63)
+    at Module._compile (node:internal/modules/cjs/loader:1376:14)
+
+Node.js v20.11.0
