@@ -10,7 +10,6 @@ const ChatModal = ({ isOpen, onClose, sellerId, productId }) => {
     const messageContainerRef = useRef(null);
     const { sendRequest } = useHttpClient();
 
-    const roomId = `chat-${productId}-${sellerId}`;
 
     const getCookieValue = (name) => {
         const value = document.cookie
@@ -18,6 +17,8 @@ const ChatModal = ({ isOpen, onClose, sellerId, productId }) => {
             .find((row) => row.startsWith(name + "="));
         return value ? decodeURIComponent(value.split("=")[1]) : null;
     };
+
+    const roomId = `chat-${productId}-${sellerId}-${getCookieValue("userId")}`;
 
     useEffect(() => {
         if (isOpen) {
