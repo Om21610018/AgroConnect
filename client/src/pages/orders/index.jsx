@@ -9,7 +9,7 @@ import OrderSummary from "./OrderSummary";
 import PaymentCard from "./PaymentCard";
 
 function Order() {
-  const deliveryCharge = 500;
+  const deliveryCharge = 300;
   const limitForFreeDelivery = 1500;
 
   const cartData = useSelector((state) => state.cartReducer);

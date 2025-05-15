@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-const PaymentComponent = () => {
+const PaymentComponent = ({totalAmount}) => {
     const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
     // Load Razorpay script dynamically
@@ -22,7 +22,7 @@ const PaymentComponent = () => {
         try {
             // Create order on the backend
             const { data } = await axios.post("http://localhost:8000/payment/create-order", {
-                amount: 500 * 100, // Convert INR to paise
+                amount: totalAmount, // Convert INR to paise
             });
 
             const options = {

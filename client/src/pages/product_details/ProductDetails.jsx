@@ -498,6 +498,7 @@ function ProductDetails() {
               onClose={handleCloseChat}
               sellerId={productDashboardData.sellerId}
               productId={productId}
+              productDetails={productDashboardData} // Pass product details here
             />
           )}
         </div>

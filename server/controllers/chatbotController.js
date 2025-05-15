@@ -80,7 +80,7 @@ exports.chatbotController = [
 
         // Send the transcription to the external API
         const apiResponse = await fetch(
-          "http://localhost:7860/api/v1/run/d12b3797-1a66-4681-98fc-d5c0cb1a70c9?stream=false",
+          "http://34.93.113.136:7860/api/v1/run/d12b3797-1a66-4681-98fc-d5c0cb1a70c9?stream=false",
           {
             method: "POST",
             headers: {

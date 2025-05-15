@@ -72,7 +72,7 @@ const PaymentCard = ({
 
       </div>
       <div className="w-full flex justify-center items-center">
-        <PaymentComponent totalAmount={totalAmount} orderProduct={orderProduct} cartData={cartData} />
+        <PaymentComponent totalAmount={totalAmount +(totalAmount >= limitForFreeDelivery ? 0 : deliveryCharge)} orderProduct={orderProduct} cartData={cartData} />
       </div>
       {/* <div className="w-full flex justify-center items-center">
         <button
